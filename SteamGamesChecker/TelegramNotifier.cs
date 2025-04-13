@@ -230,14 +230,14 @@ namespace SteamGamesChecker
         /// </summary>
         /// <param name="gameInfo">Thông tin game cần thông báo</param>
         /// <returns>Task kết quả gửi tin nhắn</returns>
-        public async Task SendGameUpdateNotification(GameInfo gameInfo)
+        public async Task<bool> SendGameUpdateNotification(GameInfo gameInfo)
         {
             if (!isEnabled || botClient == null || chatIds.Count == 0 || gameInfo == null)
-                return;
+                return false;
 
             // Chỉ thông báo nếu game có cập nhật mới hơn ngưỡng cài đặt
             if (gameInfo.UpdateDaysCount > notificationThreshold)
-                return;
+                return false;
 
             try
             {
@@ -272,10 +272,12 @@ namespace SteamGamesChecker
                         System.Diagnostics.Debug.WriteLine($"Lỗi gửi tin nhắn đến chat {chatId}: {ex.Message}");
                     }
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Lỗi gửi thông báo Telegram: {ex.Message}");
+                return false;
             }
         }
 
@@ -301,6 +303,38 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi gửi tin nhắn kiểm tra: {ex.Message}");
                 MessageBox.Show($"Lỗi gửi tin nhắn: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Chuyển đổi thời gian sang định dạng Việt Nam
+        /// </summary>
+        /// <param name="timeString">Chuỗi thời gian</param>
+        /// <returns>Chuỗi thời gian định dạng Việt Nam</returns>
+        public string ConvertToVietnamTime(string timeString)
+        {
+            if (string.IsNullOrEmpty(timeString) || timeString.Contains("Không"))
+                return timeString;
+
+            try
+            {
+                // Kiểm tra nếu đã có chuỗi định dạng Việt Nam
+                if (timeString.Contains("tháng"))
+                    return timeString;
+
+                // Phân tích chuỗi thời gian
+                DateTime time;
+                if (DateTime.TryParse(timeString, out time))
+                {
+                    // Chuyển đổi sang định dạng Việt Nam
+                    return time.ToString("dd MMMM yyyy - HH:mm:ss");
+                }
+
+                return timeString;
+            }
+            catch
+            {
+                return timeString;
             }
         }
     }

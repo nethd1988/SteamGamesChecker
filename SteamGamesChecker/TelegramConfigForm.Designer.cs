@@ -32,11 +32,11 @@
             this.txtBotToken = new System.Windows.Forms.TextBox();
             this.btnSaveToken = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.lblChatId = new System.Windows.Forms.Label();
-            this.txtChatId = new System.Windows.Forms.TextBox();
-            this.btnAddChatId = new System.Windows.Forms.Button();
-            this.lstChatIds = new System.Windows.Forms.ListBox();
             this.btnRemoveChatId = new System.Windows.Forms.Button();
+            this.lstChatIds = new System.Windows.Forms.ListBox();
+            this.btnAddChatId = new System.Windows.Forms.Button();
+            this.txtChatId = new System.Windows.Forms.TextBox();
+            this.lblChatId = new System.Windows.Forms.Label();
             this.btnTestBot = new System.Windows.Forms.Button();
             this.lblTestStatus = new System.Windows.Forms.Label();
             this.chkEnable = new System.Windows.Forms.CheckBox();

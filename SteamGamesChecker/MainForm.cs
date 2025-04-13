@@ -131,6 +131,179 @@ namespace SteamGamesChecker
             MessageBox.Show(aboutText, "Giới thiệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
+        // Phương thức xử lý sự kiện ScanTimer_Tick
+        private void ScanTimer_Tick(object sender, EventArgs e)
+        {
+            // Gọi hàm quét tất cả game một cách bất đồng bộ
+            Task.Run(async () => {
+                await ScanAllGames();
+            });
+        }
+
+        // Hàm cập nhật ListView
+        private void UpdateListViewItem(GameInfo gameInfo)
+        {
+            if (gameInfo == null || string.IsNullOrEmpty(gameInfo.AppID))
+                return;
+
+            foreach (ListViewItem item in lvGameHistory.Items)
+            {
+                if (item.Tag.ToString() == gameInfo.AppID)
+                {
+                    item.SubItems[0].Text = gameInfo.Name;
+                    item.SubItems[2].Text = ConvertToVietnamTime(gameInfo.LastUpdate);
+                    item.SubItems[3].Text = gameInfo.UpdateDaysCount.ToString();
+
+                    if (gameInfo.HasRecentUpdate)
+                    {
+                        item.BackColor = Color.LightGreen;
+                    }
+                    else
+                    {
+                        item.BackColor = SystemColors.Window;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        // Hàm chuyển đổi thời gian sang định dạng Việt Nam
+        private string ConvertToVietnamTime(string timeString)
+        {
+            if (string.IsNullOrEmpty(timeString) || timeString.Contains("Không"))
+                return timeString;
+
+            try
+            {
+                // Kiểm tra nếu đã có chuỗi định dạng Việt Nam
+                if (timeString.Contains("tháng"))
+                    return timeString;
+
+                // Phân tích chuỗi thời gian
+                DateTime time;
+                if (DateTime.TryParse(timeString, out time))
+                {
+                    // Chuyển đổi sang định dạng Việt Nam
+                    return time.ToString("dd MMMM yyyy - HH:mm:ss");
+                }
+
+                return timeString;
+            }
+            catch
+            {
+                return timeString;
+            }
+        }
+
+        // Hàm cập nhật thanh tiến trình
+        private void UpdateProgressBar(int current, int total)
+        {
+            if (toolStripProgressBar1.InvokeRequired)
+            {
+                toolStripProgressBar1.Invoke(new Action(() => {
+                    toolStripProgressBar1.Value = current;
+                }));
+            }
+            else
+            {
+                toolStripProgressBar1.Value = current;
+            }
+        }
+
+        // Hàm sắp xếp game theo thời gian cập nhật
+        private void SortGamesByLastUpdate(bool ascending)
+        {
+            lvGameHistory.BeginUpdate();
+            List<ListViewItem> items = new List<ListViewItem>();
+
+            foreach (ListViewItem item in lvGameHistory.Items)
+            {
+                items.Add(item);
+            }
+
+            lvGameHistory.Items.Clear();
+
+            if (ascending)
+            {
+                // Cũ nhất lên đầu
+                items.Sort((a, b) => {
+                    string appIdA = a.Tag.ToString();
+                    string appIdB = b.Tag.ToString();
+
+                    if (gameHistory.ContainsKey(appIdA) &&
+                    gameHistory.ContainsKey(appIdB) &&
+                    gameHistory[appIdA].LastUpdateDateTime.HasValue &&
+                    gameHistory[appIdB].LastUpdateDateTime.HasValue)
+                    {
+                        return gameHistory[appIdA].LastUpdateDateTime.Value.CompareTo(gameHistory[appIdB].LastUpdateDateTime.Value);
+                    }
+                    return 0;
+                });
+            }
+            else
+            {
+                // Mới nhất lên đầu
+                items.Sort((a, b) => {
+                    string appIdA = a.Tag.ToString();
+                    string appIdB = b.Tag.ToString();
+
+                    if (gameHistory.ContainsKey(appIdA) &&
+                        gameHistory.ContainsKey(appIdB) &&
+                        gameHistory[appIdA].LastUpdateDateTime.HasValue &&
+                        gameHistory[appIdB].LastUpdateDateTime.HasValue)
+                    {
+                        return gameHistory[appIdB].LastUpdateDateTime.Value.CompareTo(gameHistory[appIdA].LastUpdateDateTime.Value);
+                    }
+                    return 0;
+                });
+            }
+
+            lvGameHistory.Items.AddRange(items.ToArray());
+            lvGameHistory.EndUpdate();
+        }
+
+        // Hàm xử lý sự kiện click vào cột để sắp xếp
+        private void lvGameHistory_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            // Nếu click vào cột thời gian cập nhật (cột thứ 3)
+            if (e.Column == 2)
+            {
+                isSortedAscending = !isSortedAscending;
+                SortGamesByLastUpdate(isSortedAscending);
+            }
+        }
+
+        // Hàm tải danh sách game IDs từ file
+        private void LoadGameIDs()
+        {
+            if (File.Exists(idListPath))
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines(idListPath);
+                    foreach (string line in lines)
+                    {
+                        string[] parts = line.Split('|');
+                        if (parts.Length >= 2)
+                        {
+                            string name = parts[0].Trim();
+                            string appId = parts[1].Trim();
+
+                            if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(appId))
+                            {
+                                lbSavedIDs.Items.Add($"{name} ({appId})");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi khi đọc file game IDs: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
         // Sửa đổi ScanAllGames để thêm phần gửi thông báo Telegram
         private async Task ScanAllGames()
         {
@@ -281,6 +454,150 @@ namespace SteamGamesChecker
             toolStripProgressBar1.Visible = false;
         }
 
-        // ... các phương thức khác không thay đổi ...
+        // Phương thức thử tất cả các phương pháp để lấy thông tin game
+        private async Task<GameInfo> TryAllMethods(string appID)
+        {
+            GameInfo info = null;
+
+            // Thử phương thức XPAW API
+            try
+            {
+                info = await GetGameInfoFromXPAW(appID);
+                if (info != null && !string.IsNullOrEmpty(info.Name) && info.Name != "Không xác định")
+                {
+                    return info;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng XPAW API: {ex.Message}");
+            }
+
+            // Thử phương thức Steam API
+            try
+            {
+                info = await GetGameInfoFromSteamAPI(appID);
+                if (info != null && !string.IsNullOrEmpty(info.Name) && info.Name != "Không xác định")
+                {
+                    return info;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng Steam API: {ex.Message}");
+            }
+
+            // Nếu không có phương thức nào thành công, trả về thông tin trống
+            return new GameInfo { AppID = appID };
+        }
+
+        // Phương thức lấy thông tin game từ XPAW API
+        private async Task<GameInfo> GetGameInfoFromXPAW(string appID)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                GameInfo info = new GameInfo();
+                info.AppID = appID;
+
+                try
+                {
+                    string url = $"{XPAW_API_URL}{appID}";
+                    HttpResponseMessage response = await client.GetAsync(url);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string json = await response.Content.ReadAsStringAsync();
+                        dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+
+                        if (data != null && data.success == true && data.data != null && data.data[appID] != null)
+                        {
+                            var gameData = data.data[appID];
+
+                            info.Name = gameData.common?.name ?? "Không xác định";
+                            info.Developer = gameData.extended?.developer ?? "Không có thông tin";
+                            info.Publisher = gameData.extended?.publisher ?? "Không có thông tin";
+
+                            // Lấy thông tin cập nhật
+                            if (gameData.time_updated != null)
+                            {
+                                long timestamp = (long)gameData.time_updated;
+                                DateTime updateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                                    .AddSeconds(timestamp);
+
+                                info.LastUpdate = updateTime.ToString("dd MMMM yyyy - HH:mm:ss UTC");
+                                info.LastUpdateDateTime = updateTime;
+                                info.UpdateDaysCount = (int)(DateTime.UtcNow - updateTime).TotalDays;
+                                info.HasRecentUpdate = info.UpdateDaysCount < telegramNotifier.NotificationThreshold;
+                            }
+
+                            return info;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"XPAW API Error: {ex.Message}");
+                    throw;
+                }
+
+                return info;
+            }
+        }
+
+        // Phương thức lấy thông tin game từ Steam API
+        private async Task<GameInfo> GetGameInfoFromSteamAPI(string appID)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                GameInfo info = new GameInfo();
+                info.AppID = appID;
+
+                try
+                {
+                    string url = $"{STEAM_API_URL}{appID}";
+                    HttpResponseMessage response = await client.GetAsync(url);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string json = await response.Content.ReadAsStringAsync();
+                        dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+
+                        if (data != null && data[appID]?.success == true && data[appID]?.data != null)
+                        {
+                            var gameData = data[appID].data;
+
+                            info.Name = gameData.name ?? "Không xác định";
+
+                            if (gameData.developers != null && gameData.developers.Count > 0)
+                            {
+                                info.Developer = gameData.developers[0];
+                            }
+
+                            if (gameData.publishers != null && gameData.publishers.Count > 0)
+                            {
+                                info.Publisher = gameData.publishers[0];
+                            }
+
+                            if (gameData.release_date != null)
+                            {
+                                info.ReleaseDate = gameData.release_date.date;
+                            }
+
+                            // Lưu ý: Steam API không cung cấp thời gian cập nhật
+                            // Chúng ta sẽ duy trì thông tin cập nhật hiện tại nếu có
+
+                            return info;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Steam API Error: {ex.Message}");
+                    throw;
+                }
+
+                return info;
+            }
+        }
     }
 }
