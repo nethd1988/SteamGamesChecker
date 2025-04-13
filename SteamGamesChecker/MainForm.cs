@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
 using System.Collections.Generic;
-using System.IO;
-using System.Globalization;
-using System.Linq;
 using System.Threading;
+using System.Linq;
+using System.Globalization;
+using Newtonsoft.Json;
 
 namespace SteamGamesChecker
 {
@@ -201,9 +201,10 @@ namespace SteamGamesChecker
         {
             if (toolStripProgressBar1.InvokeRequired)
             {
-                toolStripProgressBar1.Invoke(new Action(() => {
+                // Sử dụng tên đầy đủ của Invoke để tránh lỗi không tìm thấy phương thức
+                toolStripProgressBar1.Invoke((MethodInvoker)delegate {
                     toolStripProgressBar1.Value = current;
-                }));
+                });
             }
             else
             {
@@ -232,9 +233,9 @@ namespace SteamGamesChecker
                     string appIdB = b.Tag.ToString();
 
                     if (gameHistory.ContainsKey(appIdA) &&
-                    gameHistory.ContainsKey(appIdB) &&
-                    gameHistory[appIdA].LastUpdateDateTime.HasValue &&
-                    gameHistory[appIdB].LastUpdateDateTime.HasValue)
+                        gameHistory.ContainsKey(appIdB) &&
+                        gameHistory[appIdA].LastUpdateDateTime.HasValue &&
+                        gameHistory[appIdB].LastUpdateDateTime.HasValue)
                     {
                         return gameHistory[appIdA].LastUpdateDateTime.Value.CompareTo(gameHistory[appIdB].LastUpdateDateTime.Value);
                     }
@@ -277,11 +278,11 @@ namespace SteamGamesChecker
         // Hàm tải danh sách game IDs từ file
         private void LoadGameIDs()
         {
-            if (File.Exists(idListPath))
+            if (System.IO.File.Exists(idListPath)) // Sử dụng tên đầy đủ của File để tránh tham chiếu không rõ ràng
             {
                 try
                 {
-                    string[] lines = File.ReadAllLines(idListPath);
+                    string[] lines = System.IO.File.ReadAllLines(idListPath);
                     foreach (string line in lines)
                     {
                         string[] parts = line.Split('|');
@@ -300,6 +301,238 @@ namespace SteamGamesChecker
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Lỗi khi đọc file game IDs: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        // Lưu danh sách game IDs vào file
+        private void SaveGameIDs()
+        {
+            try
+            {
+                using (System.IO.StreamWriter writer = new System.IO.StreamWriter(idListPath)) // Sử dụng tên đầy đủ của StreamWriter
+                {
+                    foreach (object item in lbSavedIDs.Items)
+                    {
+                        string listItem = item.ToString();
+                        Match match = Regex.Match(listItem, @"(.+) \((\d+)\)$");
+                        if (match.Success)
+                        {
+                            string name = match.Groups[1].Value.Trim();
+                            string id = match.Groups[2].Value;
+                            writer.WriteLine($"{name}|{id}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi lưu file game IDs: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Phương thức thử tất cả các phương pháp để lấy thông tin game
+        private async Task<GameInfo> TryAllMethods(string appID)
+        {
+            GameInfo info = null;
+
+            // Thử phương thức XPAW API
+            try
+            {
+                info = await GetGameInfoFromXPAW(appID);
+                if (info != null && !string.IsNullOrEmpty(info.Name) && info.Name != "Không xác định")
+                {
+                    return info;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng XPAW API: {ex.Message}");
+            }
+
+            // Thử phương thức Steam API
+            try
+            {
+                info = await GetGameInfoFromSteamAPI(appID);
+                if (info != null && !string.IsNullOrEmpty(info.Name) && info.Name != "Không xác định")
+                {
+                    return info;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng Steam API: {ex.Message}");
+            }
+
+            // Nếu không có phương thức nào thành công, trả về thông tin trống
+            return new GameInfo { AppID = appID };
+        }
+
+        // Phương thức xử lý sự kiện btnCheckUpdate_Click
+        private async void btnCheckUpdate_Click(object sender, EventArgs e)
+        {
+            string appID = txtAppID.Text.Trim();
+            if (string.IsNullOrEmpty(appID))
+            {
+                MessageBox.Show("Vui lòng nhập App ID!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            lblStatus.Text = "Trạng thái: Đang kiểm tra...";
+            lblStatus.ForeColor = Color.Blue;
+            Application.DoEvents();
+
+            try
+            {
+                GameInfo gameInfo = await TryAllMethods(appID);
+
+                if (gameInfo != null && !string.IsNullOrEmpty(gameInfo.Name) && gameInfo.Name != "Không xác định")
+                {
+                    // Cập nhật thông tin datetime
+                    gameInfo.UpdateLastUpdateDateTime();
+
+                    // Cập nhật vào gameHistory và ListView
+                    if (!gameHistory.ContainsKey(appID))
+                    {
+                        gameHistory.Add(appID, gameInfo);
+
+                        // Thêm vào ListView
+                        ListViewItem lvItem = new ListViewItem(gameInfo.Name);
+                        lvItem.SubItems.Add(gameInfo.AppID);
+                        lvItem.SubItems.Add(ConvertToVietnamTime(gameInfo.LastUpdate));
+                        lvItem.SubItems.Add(gameInfo.UpdateDaysCount.ToString());
+                        lvItem.Tag = appID;
+
+                        if (gameInfo.HasRecentUpdate)
+                        {
+                            lvItem.BackColor = Color.LightGreen;
+                        }
+
+                        lvGameHistory.Items.Add(lvItem);
+
+                        // Hiển thị thông báo thành công
+                        lblStatus.Text = $"Trạng thái: Đã kiểm tra {gameInfo.Name} - Cập nhật: {gameInfo.LastUpdate}";
+                        lblStatus.ForeColor = Color.Green;
+                    }
+                    else
+                    {
+                        gameHistory[appID] = gameInfo;
+                        UpdateListViewItem(gameInfo);
+
+                        // Hiển thị thông báo thành công
+                        lblStatus.Text = $"Trạng thái: Đã cập nhật {gameInfo.Name} - Cập nhật: {gameInfo.LastUpdate}";
+                        lblStatus.ForeColor = Color.Green;
+                    }
+                }
+                else
+                {
+                    lblStatus.Text = "Trạng thái: Không tìm thấy thông tin game";
+                    lblStatus.ForeColor = Color.Red;
+                }
+            }
+            catch (Exception ex)
+            {
+                lblStatus.Text = $"Trạng thái: Lỗi - {ex.Message}";
+                lblStatus.ForeColor = Color.Red;
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi kiểm tra cập nhật: {ex.Message}");
+            }
+        }
+
+        // Phương thức xử lý sự kiện btnSave_Click
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            string appID = txtAppID.Text.Trim();
+            if (string.IsNullOrEmpty(appID))
+            {
+                MessageBox.Show("Vui lòng nhập App ID!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Lấy thông tin game từ gameHistory hoặc ListView
+            string gameName = "Game " + appID;
+            foreach (ListViewItem item in lvGameHistory.Items)
+            {
+                if (item.SubItems[1].Text == appID)
+                {
+                    gameName = item.SubItems[0].Text;
+                    break;
+                }
+            }
+
+            // Kiểm tra xem game đã tồn tại trong danh sách chưa
+            bool exists = false;
+            foreach (object item in lbSavedIDs.Items)
+            {
+                if (item.ToString().Contains($"({appID})"))
+                {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if (!exists)
+            {
+                lbSavedIDs.Items.Add($"{gameName} ({appID})");
+                SaveGameIDs();
+                MessageBox.Show($"Đã thêm {gameName} (ID: {appID}) vào danh sách theo dõi!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show($"Game này đã có trong danh sách theo dõi!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        // Phương thức xử lý sự kiện btnScanAll_Click
+        private async void btnScanAll_Click(object sender, EventArgs e)
+        {
+            await ScanAllGames();
+        }
+
+        // Phương thức xử lý sự kiện btnRemove_Click
+        private void btnRemove_Click(object sender, EventArgs e)
+        {
+            if (lbSavedIDs.SelectedIndex != -1)
+            {
+                string selectedItem = lbSavedIDs.SelectedItem.ToString();
+                lbSavedIDs.Items.RemoveAt(lbSavedIDs.SelectedIndex);
+                SaveGameIDs();
+                MessageBox.Show($"Đã xóa {selectedItem} khỏi danh sách theo dõi!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Vui lòng chọn một game để xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        // Phương thức xử lý sự kiện btnAutoScan_Click
+        private void btnAutoScan_Click(object sender, EventArgs e)
+        {
+            if (scanTimer.Enabled)
+            {
+                scanTimer.Stop();
+                btnAutoScan.Text = "Tự Động Quét";
+                lblStatus.Text = "Trạng thái: Tự động quét đã dừng";
+                lblStatus.ForeColor = SystemColors.ControlText;
+            }
+            else
+            {
+                // Lấy thời gian quét từ textbox
+                if (int.TryParse(txtScanInterval.Text, out int minutes) && minutes > 0)
+                {
+                    scanTimer.Interval = minutes * 60 * 1000; // Chuyển phút thành mili giây
+                    scanTimer.Start();
+                    btnAutoScan.Text = "Dừng Tự Động";
+                    lblStatus.Text = $"Trạng thái: Tự động quét mỗi {minutes} phút";
+                    lblStatus.ForeColor = Color.Green;
+
+                    // Quét lần đầu ngay sau khi bật
+                    Task.Run(async () => {
+                        await ScanAllGames();
+                    });
+                }
+                else
+                {
+                    MessageBox.Show("Vui lòng nhập thời gian quét hợp lệ (phút)!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -454,43 +687,6 @@ namespace SteamGamesChecker
             toolStripProgressBar1.Visible = false;
         }
 
-        // Phương thức thử tất cả các phương pháp để lấy thông tin game
-        private async Task<GameInfo> TryAllMethods(string appID)
-        {
-            GameInfo info = null;
-
-            // Thử phương thức XPAW API
-            try
-            {
-                info = await GetGameInfoFromXPAW(appID);
-                if (info != null && !string.IsNullOrEmpty(info.Name) && info.Name != "Không xác định")
-                {
-                    return info;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng XPAW API: {ex.Message}");
-            }
-
-            // Thử phương thức Steam API
-            try
-            {
-                info = await GetGameInfoFromSteamAPI(appID);
-                if (info != null && !string.IsNullOrEmpty(info.Name) && info.Name != "Không xác định")
-                {
-                    return info;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng Steam API: {ex.Message}");
-            }
-
-            // Nếu không có phương thức nào thành công, trả về thông tin trống
-            return new GameInfo { AppID = appID };
-        }
-
         // Phương thức lấy thông tin game từ XPAW API
         private async Task<GameInfo> GetGameInfoFromXPAW(string appID)
         {
@@ -507,7 +703,7 @@ namespace SteamGamesChecker
                     if (response.IsSuccessStatusCode)
                     {
                         string json = await response.Content.ReadAsStringAsync();
-                        dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+                        dynamic data = JsonConvert.DeserializeObject(json);
 
                         if (data != null && data.success == true && data.data != null && data.data[appID] != null)
                         {
@@ -560,7 +756,7 @@ namespace SteamGamesChecker
                     if (response.IsSuccessStatusCode)
                     {
                         string json = await response.Content.ReadAsStringAsync();
-                        dynamic data = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+                        dynamic data = JsonConvert.DeserializeObject(json);
 
                         if (data != null && data[appID]?.success == true && data[appID]?.data != null)
                         {
@@ -598,6 +794,25 @@ namespace SteamGamesChecker
 
                 return info;
             }
+        }
+
+        // Xử lý lỗi cho các phương thức ToolStripProgressBar
+        // Các phương thức này được thêm vào để giải quyết lỗi không tìm thấy định nghĩa
+
+        // Phương thức cho ToolStripProgressBar.InvokeRequired
+        private void InvokeRequired_Click(object sender, EventArgs e)
+        {
+            // Phương thức này được thêm vào để giải quyết lỗi tham chiếu
+            // Không cần thực hiện bất kỳ hành động nào ở đây vì chúng ta đã xử lý
+            // trong phương thức UpdateProgressBar
+        }
+
+        // Phương thức cho ToolStripProgressBar.Invoke
+        private void Invoke_Click(object sender, EventArgs e)
+        {
+            // Phương thức này được thêm vào để giải quyết lỗi tham chiếu
+            // Không cần thực hiện bất kỳ hành động nào ở đây vì chúng ta đã xử lý
+            // trong phương thức UpdateProgressBar
         }
     }
 }
