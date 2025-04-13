@@ -42,6 +42,7 @@
             this.chGameName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chAppID = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.chLastUpdate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chUpdateAgo = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.lblHistory = new System.Windows.Forms.Label();
             this.cbMethod = new System.Windows.Forms.ComboBox();
             this.lblMethod = new System.Windows.Forms.Label();
@@ -58,7 +59,13 @@
             this.rb1h = new System.Windows.Forms.RadioButton();
             this.rb30m = new System.Windows.Forms.RadioButton();
             this.lblNextScan = new System.Windows.Forms.Label();
+            this.btnSortByUpdateTime = new System.Windows.Forms.Button();
+            this.lblSortStatus = new System.Windows.Forms.Label();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.gbAutoScan.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblAppID
@@ -156,16 +163,18 @@
             this.lvGameHistory.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.chGameName,
             this.chAppID,
-            this.chLastUpdate});
+            this.chLastUpdate,
+            this.chUpdateAgo});
             this.lvGameHistory.FullRowSelect = true;
             this.lvGameHistory.HideSelection = false;
             this.lvGameHistory.Location = new System.Drawing.Point(12, 220);
             this.lvGameHistory.Name = "lvGameHistory";
-            this.lvGameHistory.Size = new System.Drawing.Size(502, 150);
+            this.lvGameHistory.Size = new System.Drawing.Size(600, 150);
             this.lvGameHistory.TabIndex = 10;
             this.lvGameHistory.UseCompatibleStateImageBehavior = false;
             this.lvGameHistory.View = System.Windows.Forms.View.Details;
             this.lvGameHistory.SelectedIndexChanged += new System.EventHandler(this.lvGameHistory_SelectedIndexChanged);
+            this.lvGameHistory.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.lvGameHistory_ColumnClick);
             // 
             // chGameName
             // 
@@ -180,7 +189,12 @@
             // chLastUpdate
             // 
             this.chLastUpdate.Text = "Cập nhật gần nhất (Giờ Việt Nam GMT+7)";
-            this.chLastUpdate.Width = 230;
+            this.chLastUpdate.Width = 250;
+            // 
+            // chUpdateAgo
+            // 
+            this.chUpdateAgo.Text = "Số ngày";
+            this.chUpdateAgo.Width = 70;
             // 
             // lblHistory
             // 
@@ -227,7 +241,7 @@
             // lbSavedIDs
             // 
             this.lbSavedIDs.FormattingEnabled = true;
-            this.lbSavedIDs.Location = new System.Drawing.Point(539, 30);
+            this.lbSavedIDs.Location = new System.Drawing.Point(618, 30);
             this.lbSavedIDs.Name = "lbSavedIDs";
             this.lbSavedIDs.Size = new System.Drawing.Size(233, 290);
             this.lbSavedIDs.TabIndex = 15;
@@ -237,7 +251,7 @@
             // 
             this.lblSavedIDs.AutoSize = true;
             this.lblSavedIDs.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSavedIDs.Location = new System.Drawing.Point(539, 11);
+            this.lblSavedIDs.Location = new System.Drawing.Point(618, 11);
             this.lblSavedIDs.Name = "lblSavedIDs";
             this.lblSavedIDs.Size = new System.Drawing.Size(122, 13);
             this.lblSavedIDs.TabIndex = 16;
@@ -245,7 +259,7 @@
             // 
             // btnRemoveID
             // 
-            this.btnRemoveID.Location = new System.Drawing.Point(539, 330);
+            this.btnRemoveID.Location = new System.Drawing.Point(618, 330);
             this.btnRemoveID.Name = "btnRemoveID";
             this.btnRemoveID.Size = new System.Drawing.Size(75, 23);
             this.btnRemoveID.TabIndex = 17;
@@ -255,7 +269,7 @@
             // 
             // btnScanAll
             // 
-            this.btnScanAll.Location = new System.Drawing.Point(697, 330);
+            this.btnScanAll.Location = new System.Drawing.Point(776, 330);
             this.btnScanAll.Name = "btnScanAll";
             this.btnScanAll.Size = new System.Drawing.Size(75, 23);
             this.btnScanAll.TabIndex = 18;
@@ -271,7 +285,7 @@
             this.gbAutoScan.Controls.Add(this.rb6h);
             this.gbAutoScan.Controls.Add(this.rb1h);
             this.gbAutoScan.Controls.Add(this.rb30m);
-            this.gbAutoScan.Location = new System.Drawing.Point(539, 359);
+            this.gbAutoScan.Location = new System.Drawing.Point(618, 359);
             this.gbAutoScan.Name = "gbAutoScan";
             this.gbAutoScan.Size = new System.Drawing.Size(233, 72);
             this.gbAutoScan.TabIndex = 19;
@@ -349,15 +363,60 @@
             // lblNextScan
             // 
             this.lblNextScan.AutoSize = true;
-            this.lblNextScan.Location = new System.Drawing.Point(12, 382);
+            this.lblNextScan.Location = new System.Drawing.Point(615, 441);
             this.lblNextScan.Name = "lblNextScan";
             this.lblNextScan.Size = new System.Drawing.Size(130, 13);
             this.lblNextScan.TabIndex = 20;
             this.lblNextScan.Text = "Quét tự động: Đã tắt";
             // 
+            // btnSortByUpdateTime
+            // 
+            this.btnSortByUpdateTime.Location = new System.Drawing.Point(537, 195);
+            this.btnSortByUpdateTime.Name = "btnSortByUpdateTime";
+            this.btnSortByUpdateTime.Size = new System.Drawing.Size(75, 23);
+            this.btnSortByUpdateTime.TabIndex = 21;
+            this.btnSortByUpdateTime.Text = "Sắp xếp";
+            this.btnSortByUpdateTime.UseVisualStyleBackColor = true;
+            this.btnSortByUpdateTime.Click += new System.EventHandler(this.btnSortByUpdateTime_Click);
+            // 
+            // lblSortStatus
+            // 
+            this.lblSortStatus.AutoSize = true;
+            this.lblSortStatus.Location = new System.Drawing.Point(343, 200);
+            this.lblSortStatus.Name = "lblSortStatus";
+            this.lblSortStatus.Size = new System.Drawing.Size(188, 13);
+            this.lblSortStatus.TabIndex = 22;
+            this.lblSortStatus.Text = "(Nhấn vào tiêu đề cột để sắp xếp)";
+            // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1,
+            this.toolStripProgressBar1});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 463);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(864, 22);
+            this.statusStrip1.TabIndex = 23;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabel1
+            // 
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(111, 17);
+            this.toolStripStatusLabel1.Text = "Steam Games Checker";
+            // 
+            // toolStripProgressBar1
+            // 
+            this.toolStripProgressBar1.Name = "toolStripProgressBar1";
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(200, 16);
+            this.toolStripProgressBar1.Visible = false;
+            // 
             // MainForm
             // 
-            this.ClientSize = new System.Drawing.Size(784, 441);
+            this.ClientSize = new System.Drawing.Size(864, 485);
+            this.Controls.Add(this.statusStrip1);
+            this.Controls.Add(this.lblSortStatus);
+            this.Controls.Add(this.btnSortByUpdateTime);
             this.Controls.Add(this.lblNextScan);
             this.Controls.Add(this.gbAutoScan);
             this.Controls.Add(this.btnScanAll);
@@ -385,6 +444,8 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.gbAutoScan.ResumeLayout(false);
             this.gbAutoScan.PerformLayout();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -405,6 +466,7 @@
         private System.Windows.Forms.ColumnHeader chGameName;
         private System.Windows.Forms.ColumnHeader chAppID;
         private System.Windows.Forms.ColumnHeader chLastUpdate;
+        private System.Windows.Forms.ColumnHeader chUpdateAgo;
         private System.Windows.Forms.Label lblHistory;
         private System.Windows.Forms.ComboBox cbMethod;
         private System.Windows.Forms.Label lblMethod;
@@ -421,5 +483,10 @@
         private System.Windows.Forms.RadioButton rb12h;
         private System.Windows.Forms.RadioButton rb24h;
         private System.Windows.Forms.Label lblNextScan;
+        private System.Windows.Forms.Button btnSortByUpdateTime;
+        private System.Windows.Forms.Label lblSortStatus;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
     }
 }
