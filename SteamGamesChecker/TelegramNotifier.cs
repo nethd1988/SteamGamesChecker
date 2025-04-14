@@ -5,8 +5,9 @@ using System.Windows.Forms;
 using System.Text;
 using Newtonsoft.Json;
 using System.IO;
+using Telegram.Bot;
 using Telegram.Bot.Types;
-using System.Xml;
+using IOFile = System.IO.File;
 
 namespace SteamGamesChecker
 {
@@ -15,7 +16,7 @@ namespace SteamGamesChecker
     /// </summary>
     public class TelegramNotifier
     {
-        private ITelegramBotClient botClient;
+        private TelegramBotClient botClient;
         private string botToken;
         private List<long> chatIds = new List<long>();
         private string configPath = "telegram_config.json";
@@ -66,7 +67,7 @@ namespace SteamGamesChecker
                 };
 
                 string json = JsonConvert.SerializeObject(config, Formatting.Indented);
-                File.WriteAllText(configPath, json, Encoding.UTF8);
+                IOFile.WriteAllText(configPath, json, Encoding.UTF8);
             }
             catch (Exception ex)
             {
@@ -81,9 +82,9 @@ namespace SteamGamesChecker
         {
             try
             {
-                if (File.Exists(configPath))
+                if (IOFile.Exists(configPath))
                 {
-                    string json = File.ReadAllText(configPath, Encoding.UTF8);
+                    string json = IOFile.ReadAllText(configPath, Encoding.UTF8);
                     TelegramConfig config = JsonConvert.DeserializeObject<TelegramConfig>(json);
 
                     if (config != null)

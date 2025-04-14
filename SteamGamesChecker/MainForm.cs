@@ -126,7 +126,8 @@ namespace SteamGamesChecker
         private void ScanTimer_Tick(object sender, EventArgs e)
         {
             // Gọi hàm quét tất cả game một cách bất đồng bộ
-            Task.Run(async () => {
+            Task.Run(async () =>
+            {
                 await ScanAllGames();
             });
         }
@@ -192,7 +193,8 @@ namespace SteamGamesChecker
         {
             if (toolStripProgressBar1.InvokeRequired)
             {
-                toolStripProgressBar1.Invoke((MethodInvoker)delegate {
+                toolStripProgressBar1.Invoke((MethodInvoker)delegate
+                {
                     toolStripProgressBar1.Value = current;
                 });
             }
@@ -218,7 +220,8 @@ namespace SteamGamesChecker
             if (ascending)
             {
                 // Cũ nhất lên đầu
-                items.Sort((a, b) => {
+                items.Sort((a, b) =>
+                {
                     string appIdA = a.Tag.ToString();
                     string appIdB = b.Tag.ToString();
 
@@ -235,7 +238,8 @@ namespace SteamGamesChecker
             else
             {
                 // Mới nhất lên đầu
-                items.Sort((a, b) => {
+                items.Sort((a, b) =>
+                {
                     string appIdA = a.Tag.ToString();
                     string appIdB = b.Tag.ToString();
 
@@ -775,7 +779,12 @@ namespace SteamGamesChecker
                     lblStatus.ForeColor = Color.Green;
 
                     // Quét lần đầu ngay sau khi bật
-                    Task.Run(async () => {
+                    Task.Run(async () =>
+                    {
                         await ScanAllGames();
                     });
                 }
+            }
+        }
+    }
+}
