@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using Newtonsoft.Json;
 
 namespace SteamGamesChecker
 {
@@ -20,6 +22,11 @@ namespace SteamGamesChecker
         public int UpdateDaysCount { get; set; }
         public bool HasRecentUpdate { get; set; }
         public string Status { get; set; }
+        public long ChangeNumber { get; set; } // Số thay đổi từ SteamCMD API
+
+        // Thêm thuộc tính cho file cập nhật lịch sử
+        [JsonIgnore] // Không serialize thuộc tính này khi lưu vào file
+        public DateTime LastChecked { get; set; }
 
         public GameInfo()
         {
@@ -33,10 +40,12 @@ namespace SteamGamesChecker
             Status = "Chưa xác định";
             HasRecentUpdate = false;
             UpdateDaysCount = -1;
+            ChangeNumber = 0;
+            LastChecked = DateTime.Now;
         }
 
         /// <summary>
-        /// Cập nhật thuộc tính LastUpdateDateTime từ chuỗi LastUpdate
+        /// Cập nhật thuộc tính LastUpdateDateTime từ chuỗi LastUpdate hoặc timestamp
         /// </summary>
         public void UpdateLastUpdateDateTime()
         {
@@ -62,17 +71,20 @@ namespace SteamGamesChecker
                     int second = int.Parse(match.Groups[6].Value);
 
                     // Chuyển tên tháng sang số
-                    DateTime tempDate = DateTime.ParseExact(monthName, "MMMM", System.Globalization.CultureInfo.InvariantCulture);
+                    DateTime tempDate = DateTime.ParseExact(monthName, "MMMM", CultureInfo.InvariantCulture);
                     int month = tempDate.Month;
 
                     // Tạo DateTime UTC
-                    LastUpdateDateTime = new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc);
+                    DateTime utcTime = new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc);
+
+                    // Chuyển sang giờ Việt Nam (UTC+7)
+                    LastUpdateDateTime = utcTime.AddHours(7);
 
                     // Cập nhật số ngày kể từ lần cập nhật cuối
-                    UpdateDaysCount = (int)(DateTime.UtcNow - LastUpdateDateTime.Value).TotalDays;
+                    UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
 
-                    // Đánh dấu cập nhật gần đây nếu ít hơn 7 ngày
-                    HasRecentUpdate = UpdateDaysCount < 7;
+                    // Đánh dấu cập nhật gần đây nếu ít hơn số ngày cấu hình
+                    HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7; // Mặc định là 7 ngày
 
                     return;
                 }
@@ -83,23 +95,93 @@ namespace SteamGamesChecker
                 if (match.Success)
                 {
                     long timestamp = long.Parse(match.Groups[1].Value);
-                    LastUpdateDateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp);
+                    DateTime utcTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp);
+
+                    // Chuyển sang giờ Việt Nam (UTC+7)
+                    LastUpdateDateTime = utcTime.AddHours(7);
 
                     // Cập nhật số ngày kể từ lần cập nhật cuối
-                    UpdateDaysCount = (int)(DateTime.UtcNow - LastUpdateDateTime.Value).TotalDays;
+                    UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
 
-                    // Đánh dấu cập nhật gần đây nếu ít hơn 7 ngày
-                    HasRecentUpdate = UpdateDaysCount < 7;
+                    // Đánh dấu cập nhật gần đây nếu ít hơn số ngày cấu hình
+                    HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7; // Mặc định là 7 ngày
+
+                    return;
+                }
+
+                // Thử phân tích chuỗi thời gian thông thường
+                DateTime parsedDate;
+                if (DateTime.TryParse(LastUpdate, out parsedDate))
+                {
+                    if (parsedDate.Kind == DateTimeKind.Utc)
+                    {
+                        // Nếu là UTC, chuyển sang giờ Việt Nam
+                        LastUpdateDateTime = parsedDate.AddHours(7);
+                    }
+                    else if (parsedDate.Kind == DateTimeKind.Unspecified)
+                    {
+                        // Gán Kind là Local nếu không xác định
+                        LastUpdateDateTime = DateTime.SpecifyKind(parsedDate, DateTimeKind.Local);
+                    }
+                    else
+                    {
+                        LastUpdateDateTime = parsedDate;
+                    }
+
+                    // Cập nhật số ngày kể từ lần cập nhật cuối
+                    UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+
+                    // Đánh dấu cập nhật gần đây nếu ít hơn số ngày cấu hình
+                    HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7; // Mặc định là 7 ngày
 
                     return;
                 }
 
                 LastUpdateDateTime = null;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi xử lý thời gian cập nhật: {ex.Message}");
                 LastUpdateDateTime = null;
             }
+        }
+
+        /// <summary>
+        /// Trả về thời gian cập nhật định dạng giờ Việt Nam
+        /// </summary>
+        public string GetVietnameseTimeFormat()
+        {
+            if (LastUpdateDateTime.HasValue)
+            {
+                return LastUpdateDateTime.Value.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
+            }
+            return LastUpdate;
+        }
+
+        /// <summary>
+        /// So sánh với thông tin game khác để xem có cập nhật mới không
+        /// </summary>
+        /// <param name="other">Thông tin game trước đó</param>
+        /// <returns>True nếu có cập nhật mới</returns>
+        public bool HasNewerUpdate(GameInfo other)
+        {
+            if (other == null)
+                return HasRecentUpdate;
+
+            // So sánh theo ChangeNumber (nếu có)
+            if (ChangeNumber > 0 && other.ChangeNumber > 0)
+            {
+                return ChangeNumber > other.ChangeNumber;
+            }
+
+            // So sánh theo thời gian cập nhật
+            if (LastUpdateDateTime.HasValue && other.LastUpdateDateTime.HasValue)
+            {
+                return LastUpdateDateTime.Value > other.LastUpdateDateTime.Value;
+            }
+
+            // Mặc định, kiểm tra nếu thông tin cập nhật khác nhau
+            return LastUpdate != other.LastUpdate && !string.IsNullOrEmpty(LastUpdate) && !LastUpdate.Contains("Không");
         }
     }
 }

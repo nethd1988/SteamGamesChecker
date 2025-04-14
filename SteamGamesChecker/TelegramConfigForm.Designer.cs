@@ -89,21 +89,24 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Chat IDs";
             // 
-            // lblChatId
+            // btnRemoveChatId
             // 
-            this.lblChatId.AutoSize = true;
-            this.lblChatId.Location = new System.Drawing.Point(17, 22);
-            this.lblChatId.Name = "lblChatId";
-            this.lblChatId.Size = new System.Drawing.Size(46, 13);
-            this.lblChatId.TabIndex = 0;
-            this.lblChatId.Text = "Chat ID:";
+            this.btnRemoveChatId.Location = new System.Drawing.Point(321, 45);
+            this.btnRemoveChatId.Name = "btnRemoveChatId";
+            this.btnRemoveChatId.Size = new System.Drawing.Size(75, 23);
+            this.btnRemoveChatId.TabIndex = 4;
+            this.btnRemoveChatId.Text = "Xóa";
+            this.btnRemoveChatId.UseVisualStyleBackColor = true;
+            this.btnRemoveChatId.Click += new System.EventHandler(this.btnRemoveChatId_Click);
             // 
-            // txtChatId
+            // lstChatIds
             // 
-            this.txtChatId.Location = new System.Drawing.Point(69, 19);
-            this.txtChatId.Name = "txtChatId";
-            this.txtChatId.Size = new System.Drawing.Size(246, 20);
-            this.txtChatId.TabIndex = 1;
+            this.lstChatIds.FormattingEnabled = true;
+            this.lstChatIds.Location = new System.Drawing.Point(20, 45);
+            this.lstChatIds.Name = "lstChatIds";
+            this.lstChatIds.Size = new System.Drawing.Size(295, 95);
+            this.lstChatIds.TabIndex = 3;
+            this.lstChatIds.SelectedIndexChanged += new System.EventHandler(this.lstChatIds_SelectedIndexChanged);
             // 
             // btnAddChatId
             // 
@@ -115,23 +118,21 @@
             this.btnAddChatId.UseVisualStyleBackColor = true;
             this.btnAddChatId.Click += new System.EventHandler(this.btnAddChatId_Click);
             // 
-            // lstChatIds
+            // txtChatId
             // 
-            this.lstChatIds.FormattingEnabled = true;
-            this.lstChatIds.Location = new System.Drawing.Point(20, 45);
-            this.lstChatIds.Name = "lstChatIds";
-            this.lstChatIds.Size = new System.Drawing.Size(295, 95);
-            this.lstChatIds.TabIndex = 3;
+            this.txtChatId.Location = new System.Drawing.Point(69, 19);
+            this.txtChatId.Name = "txtChatId";
+            this.txtChatId.Size = new System.Drawing.Size(246, 20);
+            this.txtChatId.TabIndex = 1;
             // 
-            // btnRemoveChatId
+            // lblChatId
             // 
-            this.btnRemoveChatId.Location = new System.Drawing.Point(321, 45);
-            this.btnRemoveChatId.Name = "btnRemoveChatId";
-            this.btnRemoveChatId.Size = new System.Drawing.Size(75, 23);
-            this.btnRemoveChatId.TabIndex = 4;
-            this.btnRemoveChatId.Text = "Xóa";
-            this.btnRemoveChatId.UseVisualStyleBackColor = true;
-            this.btnRemoveChatId.Click += new System.EventHandler(this.btnRemoveChatId_Click);
+            this.lblChatId.AutoSize = true;
+            this.lblChatId.Location = new System.Drawing.Point(17, 22);
+            this.lblChatId.Name = "lblChatId";
+            this.lblChatId.Size = new System.Drawing.Size(46, 13);
+            this.lblChatId.TabIndex = 0;
+            this.lblChatId.Text = "Chat ID:";
             // 
             // btnTestBot
             // 

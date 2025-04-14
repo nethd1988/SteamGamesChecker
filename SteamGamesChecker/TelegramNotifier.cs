@@ -242,12 +242,15 @@ namespace SteamGamesChecker
 
             try
             {
-                // Tạo tin nhắn thông báo
+                // Tạo tin nhắn thông báo với định dạng thời gian Việt Nam
                 StringBuilder message = new StringBuilder();
-                message.AppendLine("🎮 *Game có cập nhật mới* 🎮");
+                message.AppendLine("🎮 *THÔNG BÁO CẬP NHẬT GAME* 🎮");
                 message.AppendLine($"Tên: *{gameInfo.Name}*");
                 message.AppendLine($"ID: `{gameInfo.AppID}`");
-                message.AppendLine($"Cập nhật: {gameInfo.LastUpdate}");
+
+                // Sử dụng định dạng thời gian Việt Nam
+                string vietnamTime = gameInfo.GetVietnameseTimeFormat();
+                message.AppendLine($"Cập nhật: {vietnamTime}");
                 message.AppendLine($"({gameInfo.UpdateDaysCount} ngày trước)");
 
                 if (!string.IsNullOrEmpty(gameInfo.Developer) && gameInfo.Developer != "Không có thông tin")
@@ -256,7 +259,13 @@ namespace SteamGamesChecker
                 if (!string.IsNullOrEmpty(gameInfo.Publisher) && gameInfo.Publisher != "Không có thông tin")
                     message.AppendLine($"Nhà phát hành: {gameInfo.Publisher}");
 
-                message.AppendLine($"Link: https://store.steampowered.com/app/{gameInfo.AppID}/");
+                message.AppendLine("");
+                message.AppendLine("🔗 *Liên kết:*");
+                message.AppendLine($"[Steam Store](https://store.steampowered.com/app/{gameInfo.AppID}/)");
+                message.AppendLine($"[SteamDB](https://steamdb.info/app/{gameInfo.AppID}/)");
+                message.AppendLine("");
+                message.AppendLine($"💡 Thông báo lúc: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")} (GMT+7)");
+                message.AppendLine("Từ *Steam Games Checker*");
 
                 // Gửi tin nhắn đến tất cả các chat đã đăng ký
                 foreach (long chatId in chatIds)
@@ -266,7 +275,8 @@ namespace SteamGamesChecker
                         await botClient.SendTextMessageAsync(
                             chatId: chatId,
                             text: message.ToString(),
-                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                            disableWebPagePreview: false);
                     }
                     catch (Exception ex)
                     {
@@ -294,9 +304,22 @@ namespace SteamGamesChecker
 
             try
             {
+                StringBuilder message = new StringBuilder();
+                message.AppendLine("✅ *Kết nối thành công!*");
+                message.AppendLine("");
+                message.AppendLine("Đây là tin nhắn kiểm tra từ *Steam Games Checker*");
+                message.AppendLine("");
+                message.AppendLine("⚙️ *Cấu hình hiện tại:*");
+                message.AppendLine($"- Ngưỡng thông báo: {NotificationThreshold} ngày");
+                message.AppendLine($"- Chat ID: `{chatId}`");
+                message.AppendLine($"- Thời gian kiểm tra: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")} (GMT+7)");
+                message.AppendLine("");
+                message.AppendLine("Bot đã sẵn sàng nhận thông báo về cập nhật game!");
+
                 await botClient.SendTextMessageAsync(
                     chatId: chatId,
-                    text: "✅ Đây là tin nhắn kiểm tra từ Steam Games Checker. Bot đã hoạt động thành công!");
+                    text: message.ToString(),
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
                 return true;
             }
             catch (Exception ex)
@@ -320,7 +343,7 @@ namespace SteamGamesChecker
             try
             {
                 // Kiểm tra nếu đã có chuỗi định dạng Việt Nam
-                if (timeString.Contains("tháng"))
+                if (timeString.Contains("GMT+7") || timeString.Contains("(+7)"))
                     return timeString;
 
                 // Phân tích chuỗi thời gian
@@ -328,7 +351,7 @@ namespace SteamGamesChecker
                 if (DateTime.TryParse(timeString, out time))
                 {
                     // Chuyển đổi sang định dạng Việt Nam
-                    return time.ToString("dd MMMM yyyy - HH:mm:ss");
+                    return time.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
                 }
 
                 return timeString;

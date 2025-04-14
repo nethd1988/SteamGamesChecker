@@ -34,11 +34,6 @@ namespace SteamGamesChecker
             this.txtAppID = new System.Windows.Forms.TextBox();
             this.lblAppID = new System.Windows.Forms.Label();
             this.btnCheckUpdate = new System.Windows.Forms.Button();
-            this.lvGameHistory = new System.Windows.Forms.ListView();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.lblStatus = new System.Windows.Forms.Label();
             this.cbMethod = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -60,8 +55,26 @@ namespace SteamGamesChecker
             this.aboutMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.btnConfigTelegram = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabPageGameList = new System.Windows.Forms.TabPage();
+            this.lvGameHistory = new System.Windows.Forms.ListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.tabPageScanHistory = new System.Windows.Forms.TabPage();
+            this.lvScanHistory = new System.Windows.Forms.ListView();
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.btnClearHistory = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
+            this.tabControl1.SuspendLayout();
+            this.tabPageGameList.SuspendLayout();
+            this.tabPageScanHistory.SuspendLayout();
             this.SuspendLayout();
             // 
             // txtAppID
@@ -90,42 +103,6 @@ namespace SteamGamesChecker
             this.btnCheckUpdate.UseVisualStyleBackColor = true;
             this.btnCheckUpdate.Click += new System.EventHandler(this.btnCheckUpdate_Click);
             // 
-            // lvGameHistory
-            // 
-            this.lvGameHistory.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1,
-            this.columnHeader2,
-            this.columnHeader3,
-            this.columnHeader4});
-            this.lvGameHistory.FullRowSelect = true;
-            this.lvGameHistory.GridLines = true;
-            this.lvGameHistory.HideSelection = false;
-            this.lvGameHistory.Location = new System.Drawing.Point(12, 106);
-            this.lvGameHistory.Name = "lvGameHistory";
-            this.lvGameHistory.Size = new System.Drawing.Size(481, 150);
-            this.lvGameHistory.TabIndex = 3;
-            this.lvGameHistory.UseCompatibleStateImageBehavior = false;
-            this.lvGameHistory.View = System.Windows.Forms.View.Details;
-            // 
-            // columnHeader1
-            // 
-            this.columnHeader1.Text = "Tên Game";
-            this.columnHeader1.Width = 200;
-            // 
-            // columnHeader2
-            // 
-            this.columnHeader2.Text = "ID";
-            this.columnHeader2.Width = 70;
-            // 
-            // columnHeader3
-            // 
-            this.columnHeader3.Text = "Lần Cập Nhật Cuối";
-            this.columnHeader3.Width = 120;
-            // 
-            // columnHeader4
-            // 
-            this.columnHeader4.Text = "Ngày";
-            // 
             // lblStatus
             // 
             this.lblStatus.AutoSize = true;
@@ -139,9 +116,6 @@ namespace SteamGamesChecker
             // 
             this.cbMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbMethod.FormattingEnabled = true;
-            this.cbMethod.Items.AddRange(new object[] {
-            "Steam API",
-            "SteamDB"});
             this.cbMethod.Location = new System.Drawing.Point(235, 39);
             this.cbMethod.Name = "cbMethod";
             this.cbMethod.Size = new System.Drawing.Size(121, 21);
@@ -225,9 +199,9 @@ namespace SteamGamesChecker
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripProgressBar1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 413);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 428);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(506, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(800, 22);
             this.statusStrip1.TabIndex = 14;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -245,7 +219,7 @@ namespace SteamGamesChecker
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(506, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(800, 24);
             this.menuStrip1.TabIndex = 15;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -313,11 +287,137 @@ namespace SteamGamesChecker
             this.label3.TabIndex = 17;
             this.label3.Text = "phút";
             // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tabPageGameList);
+            this.tabControl1.Controls.Add(this.tabPageScanHistory);
+            this.tabControl1.Location = new System.Drawing.Point(12, 89);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(776, 197);
+            this.tabControl1.TabIndex = 18;
+            // 
+            // tabPageGameList
+            // 
+            this.tabPageGameList.Controls.Add(this.lvGameHistory);
+            this.tabPageGameList.Location = new System.Drawing.Point(4, 22);
+            this.tabPageGameList.Name = "tabPageGameList";
+            this.tabPageGameList.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageGameList.Size = new System.Drawing.Size(768, 171);
+            this.tabPageGameList.TabIndex = 0;
+            this.tabPageGameList.Text = "Danh sách game";
+            this.tabPageGameList.UseVisualStyleBackColor = true;
+            // 
+            // lvGameHistory
+            // 
+            this.lvGameHistory.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3,
+            this.columnHeader4});
+            this.lvGameHistory.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lvGameHistory.FullRowSelect = true;
+            this.lvGameHistory.GridLines = true;
+            this.lvGameHistory.HideSelection = false;
+            this.lvGameHistory.Location = new System.Drawing.Point(3, 3);
+            this.lvGameHistory.Name = "lvGameHistory";
+            this.lvGameHistory.Size = new System.Drawing.Size(762, 165);
+            this.lvGameHistory.TabIndex = 0;
+            this.lvGameHistory.UseCompatibleStateImageBehavior = false;
+            this.lvGameHistory.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "Tên Game";
+            this.columnHeader1.Width = 250;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "ID";
+            this.columnHeader2.Width = 100;
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Lần Cập Nhật Cuối";
+            this.columnHeader3.Width = 250;
+            // 
+            // columnHeader4
+            // 
+            this.columnHeader4.Text = "Ngày";
+            this.columnHeader4.Width = 150;
+            // 
+            // tabPageScanHistory
+            // 
+            this.tabPageScanHistory.Controls.Add(this.lvScanHistory);
+            this.tabPageScanHistory.Location = new System.Drawing.Point(4, 22);
+            this.tabPageScanHistory.Name = "tabPageScanHistory";
+            this.tabPageScanHistory.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageScanHistory.Size = new System.Drawing.Size(768, 171);
+            this.tabPageScanHistory.TabIndex = 1;
+            this.tabPageScanHistory.Text = "Lịch sử quét";
+            this.tabPageScanHistory.UseVisualStyleBackColor = true;
+            // 
+            // lvScanHistory
+            // 
+            this.lvScanHistory.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader5,
+            this.columnHeader6,
+            this.columnHeader7,
+            this.columnHeader8,
+            this.columnHeader9});
+            this.lvScanHistory.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lvScanHistory.FullRowSelect = true;
+            this.lvScanHistory.GridLines = true;
+            this.lvScanHistory.HideSelection = false;
+            this.lvScanHistory.Location = new System.Drawing.Point(3, 3);
+            this.lvScanHistory.Name = "lvScanHistory";
+            this.lvScanHistory.Size = new System.Drawing.Size(762, 165);
+            this.lvScanHistory.TabIndex = 0;
+            this.lvScanHistory.UseCompatibleStateImageBehavior = false;
+            this.lvScanHistory.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Thời gian quét";
+            this.columnHeader5.Width = 150;
+            // 
+            // columnHeader6
+            // 
+            this.columnHeader6.Text = "Tổng số";
+            this.columnHeader6.Width = 80;
+            // 
+            // columnHeader7
+            // 
+            this.columnHeader7.Text = "Thành công";
+            this.columnHeader7.Width = 100;
+            // 
+            // columnHeader8
+            // 
+            this.columnHeader8.Text = "Thất bại";
+            this.columnHeader8.Width = 80;
+            // 
+            // columnHeader9
+            // 
+            this.columnHeader9.Text = "Cập nhật mới";
+            this.columnHeader9.Width = 200;
+            // 
+            // btnClearHistory
+            // 
+            this.btnClearHistory.Location = new System.Drawing.Point(693, 393);
+            this.btnClearHistory.Name = "btnClearHistory";
+            this.btnClearHistory.Size = new System.Drawing.Size(95, 23);
+            this.btnClearHistory.TabIndex = 19;
+            this.btnClearHistory.Text = "Xóa lịch sử quét";
+            this.btnClearHistory.UseVisualStyleBackColor = true;
+            this.btnClearHistory.Click += new System.EventHandler(this.btnClearHistory_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(506, 435);
+            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnClearHistory);
+            this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.btnConfigTelegram);
             this.Controls.Add(this.statusStrip1);
@@ -332,18 +432,21 @@ namespace SteamGamesChecker
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cbMethod);
             this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.lvGameHistory);
             this.Controls.Add(this.btnCheckUpdate);
             this.Controls.Add(this.lblAppID);
             this.Controls.Add(this.txtAppID);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "MainForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Steam Games Checker";
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.tabControl1.ResumeLayout(false);
+            this.tabPageGameList.ResumeLayout(false);
+            this.tabPageScanHistory.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -354,11 +457,6 @@ namespace SteamGamesChecker
         private System.Windows.Forms.TextBox txtAppID;
         private System.Windows.Forms.Label lblAppID;
         private System.Windows.Forms.Button btnCheckUpdate;
-        private System.Windows.Forms.ListView lvGameHistory;
-        private System.Windows.Forms.ColumnHeader columnHeader1;
-        private System.Windows.Forms.ColumnHeader columnHeader2;
-        private System.Windows.Forms.ColumnHeader columnHeader3;
-        private System.Windows.Forms.ColumnHeader columnHeader4;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.ComboBox cbMethod;
         private System.Windows.Forms.Label label1;
@@ -380,5 +478,20 @@ namespace SteamGamesChecker
         private System.Windows.Forms.ToolStripMenuItem aboutMenuItem;
         private System.Windows.Forms.Button btnConfigTelegram;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPageGameList;
+        private System.Windows.Forms.ListView lvGameHistory;
+        private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ColumnHeader columnHeader3;
+        private System.Windows.Forms.ColumnHeader columnHeader4;
+        private System.Windows.Forms.TabPage tabPageScanHistory;
+        private System.Windows.Forms.ListView lvScanHistory;
+        private System.Windows.Forms.ColumnHeader columnHeader5;
+        private System.Windows.Forms.ColumnHeader columnHeader6;
+        private System.Windows.Forms.ColumnHeader columnHeader7;
+        private System.Windows.Forms.ColumnHeader columnHeader8;
+        private System.Windows.Forms.ColumnHeader columnHeader9;
+        private System.Windows.Forms.Button btnClearHistory;
     }
 }
