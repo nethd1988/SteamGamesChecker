@@ -188,12 +188,12 @@ namespace SteamGamesChecker
             }
         }
 
-        // Hàm cập nhật thanh tiến trình
+        // Hàm cập nhật thanh tiến trình - ĐÃ SỬA LỖI
         private void UpdateProgressBar(int current, int total)
         {
-            if (toolStripProgressBar1.InvokeRequired)
+            if (this.InvokeRequired)
             {
-                toolStripProgressBar1.Invoke((MethodInvoker)delegate
+                this.Invoke((MethodInvoker)delegate
                 {
                     toolStripProgressBar1.Value = current;
                 });
@@ -785,6 +785,12 @@ namespace SteamGamesChecker
                     });
                 }
             }
+        }
+
+        // Thêm phương thức xử lý sự kiện cho nút cấu hình Telegram
+        private void btnConfigTelegram_Click(object sender, EventArgs e)
+        {
+            ShowTelegramConfigForm();
         }
     }
 }
