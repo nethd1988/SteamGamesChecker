@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Telegram.Bot;
 using System.Windows.Forms;
 using System.Text;
 using Newtonsoft.Json;
+using System.IO;
+using Telegram.Bot.Types;
+using System.Xml;
 
 namespace SteamGamesChecker
 {
@@ -64,7 +66,7 @@ namespace SteamGamesChecker
                 };
 
                 string json = JsonConvert.SerializeObject(config, Formatting.Indented);
-                System.IO.File.WriteAllText(configPath, json, Encoding.UTF8);
+                File.WriteAllText(configPath, json, Encoding.UTF8);
             }
             catch (Exception ex)
             {
@@ -79,9 +81,9 @@ namespace SteamGamesChecker
         {
             try
             {
-                if (System.IO.File.Exists(configPath))
+                if (File.Exists(configPath))
                 {
-                    string json = System.IO.File.ReadAllText(configPath, Encoding.UTF8);
+                    string json = File.ReadAllText(configPath, Encoding.UTF8);
                     TelegramConfig config = JsonConvert.DeserializeObject<TelegramConfig>(json);
 
                     if (config != null)
