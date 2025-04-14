@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-
-namespace SteamGamesChecker
+﻿namespace SteamGamesChecker
 {
     partial class MainForm
     {
@@ -89,13 +86,13 @@ namespace SteamGamesChecker
             this.lblAppID.AutoSize = true;
             this.lblAppID.Location = new System.Drawing.Point(12, 42);
             this.lblAppID.Name = "lblAppID";
-            this.lblAppID.Size = new System.Drawing.Size(53, 13);
+            this.lblAppID.Size = new System.Drawing.Size(43, 13);
             this.lblAppID.TabIndex = 1;
             this.lblAppID.Text = "App ID:";
             // 
             // btnCheckUpdate
             // 
-            this.btnCheckUpdate.Location = new System.Drawing.Point(371, 37);
+            this.btnCheckUpdate.Location = new System.Drawing.Point(423, 39);
             this.btnCheckUpdate.Name = "btnCheckUpdate";
             this.btnCheckUpdate.Size = new System.Drawing.Size(122, 23);
             this.btnCheckUpdate.TabIndex = 2;
@@ -108,7 +105,7 @@ namespace SteamGamesChecker
             this.lblStatus.AutoSize = true;
             this.lblStatus.Location = new System.Drawing.Point(12, 73);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(130, 13);
+            this.lblStatus.Size = new System.Drawing.Size(126, 13);
             this.lblStatus.TabIndex = 4;
             this.lblStatus.Text = "Trạng thái: Chưa kiểm tra";
             // 
@@ -116,7 +113,7 @@ namespace SteamGamesChecker
             // 
             this.cbMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbMethod.FormattingEnabled = true;
-            this.cbMethod.Location = new System.Drawing.Point(235, 39);
+            this.cbMethod.Location = new System.Drawing.Point(254, 38);
             this.cbMethod.Name = "cbMethod";
             this.cbMethod.Size = new System.Drawing.Size(121, 21);
             this.cbMethod.TabIndex = 5;
@@ -126,7 +123,7 @@ namespace SteamGamesChecker
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(177, 42);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(52, 13);
+            this.label1.Size = new System.Drawing.Size(71, 13);
             this.label1.TabIndex = 6;
             this.label1.Text = "Phương thức:";
             // 
@@ -135,7 +132,7 @@ namespace SteamGamesChecker
             this.lbSavedIDs.FormattingEnabled = true;
             this.lbSavedIDs.Location = new System.Drawing.Point(12, 292);
             this.lbSavedIDs.Name = "lbSavedIDs";
-            this.lbSavedIDs.Size = new System.Drawing.Size(300, 95);
+            this.lbSavedIDs.Size = new System.Drawing.Size(300, 199);
             this.lbSavedIDs.TabIndex = 7;
             // 
             // btnSave
@@ -184,14 +181,14 @@ namespace SteamGamesChecker
             this.txtScanInterval.Name = "txtScanInterval";
             this.txtScanInterval.Size = new System.Drawing.Size(52, 20);
             this.txtScanInterval.TabIndex = 12;
-            this.txtScanInterval.Text = "60";
+            this.txtScanInterval.Text = "15";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(336, 367);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(57, 13);
+            this.label2.Size = new System.Drawing.Size(52, 13);
             this.label2.TabIndex = 13;
             this.label2.Text = "Quét mỗi:";
             // 
@@ -199,7 +196,7 @@ namespace SteamGamesChecker
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripProgressBar1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 428);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 578);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(800, 22);
             this.statusStrip1.TabIndex = 14;
@@ -234,7 +231,7 @@ namespace SteamGamesChecker
             // exitMenuItem
             // 
             this.exitMenuItem.Name = "exitMenuItem";
-            this.exitMenuItem.Size = new System.Drawing.Size(103, 22);
+            this.exitMenuItem.Size = new System.Drawing.Size(104, 22);
             this.exitMenuItem.Text = "Thoát";
             this.exitMenuItem.Click += new System.EventHandler(this.exitMenuItem_Click);
             // 
@@ -243,13 +240,13 @@ namespace SteamGamesChecker
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.telegramMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(66, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
             this.toolsToolStripMenuItem.Text = "Công cụ";
             // 
             // telegramMenuItem
             // 
             this.telegramMenuItem.Name = "telegramMenuItem";
-            this.telegramMenuItem.Size = new System.Drawing.Size(141, 22);
+            this.telegramMenuItem.Size = new System.Drawing.Size(143, 22);
             this.telegramMenuItem.Text = "Telegram Bot";
             this.telegramMenuItem.Click += new System.EventHandler(this.telegramMenuItem_Click);
             // 
@@ -258,19 +255,19 @@ namespace SteamGamesChecker
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.aboutMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(63, 20);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(62, 20);
             this.helpToolStripMenuItem.Text = "Trợ giúp";
             // 
             // aboutMenuItem
             // 
             this.aboutMenuItem.Name = "aboutMenuItem";
-            this.aboutMenuItem.Size = new System.Drawing.Size(126, 22);
+            this.aboutMenuItem.Size = new System.Drawing.Size(125, 22);
             this.aboutMenuItem.Text = "Giới thiệu";
             this.aboutMenuItem.Click += new System.EventHandler(this.aboutMenuItem_Click);
             // 
             // btnConfigTelegram
             // 
-            this.btnConfigTelegram.Location = new System.Drawing.Point(12, 393);
+            this.btnConfigTelegram.Location = new System.Drawing.Point(12, 500);
             this.btnConfigTelegram.Name = "btnConfigTelegram";
             this.btnConfigTelegram.Size = new System.Drawing.Size(140, 23);
             this.btnConfigTelegram.TabIndex = 16;
@@ -283,7 +280,7 @@ namespace SteamGamesChecker
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(457, 367);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(29, 13);
+            this.label3.Size = new System.Drawing.Size(28, 13);
             this.label3.TabIndex = 17;
             this.label3.Text = "phút";
             // 
@@ -403,7 +400,7 @@ namespace SteamGamesChecker
             // 
             // btnClearHistory
             // 
-            this.btnClearHistory.Location = new System.Drawing.Point(693, 393);
+            this.btnClearHistory.Location = new System.Drawing.Point(693, 500);
             this.btnClearHistory.Name = "btnClearHistory";
             this.btnClearHistory.Size = new System.Drawing.Size(95, 23);
             this.btnClearHistory.TabIndex = 19;
@@ -415,7 +412,7 @@ namespace SteamGamesChecker
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(800, 600);
             this.Controls.Add(this.btnClearHistory);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label3);

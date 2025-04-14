@@ -19,73 +19,46 @@ namespace SteamGamesChecker
         private const string XPAW_API_URL = "https://steamapi.xpaw.me/v1/api.php?action=appinfo&appids=";
         private const string STEAMCMD_API_URL = "https://api.steamcmd.net/v1/info/";
         private Dictionary<string, GameInfo> gameHistory = new Dictionary<string, GameInfo>();
-        private System.Windows.Forms.Timer scanTimer = new System.Windows.Forms.Timer(); // Chỉ định rõ loại Timer
+        private System.Windows.Forms.Timer scanTimer = new System.Windows.Forms.Timer();
         private string idListPath = "game_ids.txt";
         private bool isSortedAscending = false;
-        private TelegramNotifier telegramNotifier; // Biến thành viên telegramNotifier
-        private GameHistoryManager gameHistoryManager; // Quản lý lịch sử game
-        private ScanHistoryManager scanHistoryManager; // Quản lý lịch sử quét
+        private TelegramNotifier telegramNotifier;
+        private GameHistoryManager gameHistoryManager;
+        private ScanHistoryManager scanHistoryManager;
 
         public MainForm()
         {
             InitializeComponent();
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-
-            // Cài đặt Timer
             scanTimer.Tick += new EventHandler(ScanTimer_Tick);
-            scanTimer.Interval = 3600000; // 1 giờ mặc định
-
-            // Khởi tạo Telegram Notifier
+            scanTimer.Interval = 15 * 60 * 1000; // 15 phút mặc định
             telegramNotifier = TelegramNotifier.Instance;
-
-            // Khởi tạo GameHistoryManager và ScanHistoryManager
             gameHistoryManager = GameHistoryManager.Instance;
             scanHistoryManager = ScanHistoryManager.Instance;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            // Default ID for Counter-Strike 2
             txtAppID.Text = "730";
+            cbMethod.Items.AddRange(new[] { "SteamCMD API", "XPAW API", "Steam API" });
+            cbMethod.SelectedIndex = 0;
+            txtScanInterval.Text = "15"; // Mặc định 15 phút
 
-            // Default method
-            cbMethod.Items.Clear();
-            cbMethod.Items.Add("SteamCMD API");
-            cbMethod.Items.Add("XPAW API");
-            cbMethod.Items.Add("Steam API");
-            cbMethod.SelectedIndex = 0; // SteamCMD API là mặc định
-
-            // Add sort button to ListView column header
             lvGameHistory.ColumnClick += new ColumnClickEventHandler(lvGameHistory_ColumnClick);
+            lvScanHistory.ColumnClick += new ColumnClickEventHandler(lvScanHistory_ColumnClick);
 
-            // Load saved game IDs
             LoadGameIDs();
-
-            // Cập nhật trạng thái Telegram trong menu
             UpdateTelegramMenuStatus();
+            cbMethod.SelectedIndexChanged += new EventHandler(cbMethod_SelectedIndexChanged);
+            lbSavedIDs.SelectedIndexChanged += new EventHandler(lbSavedIDs_SelectedIndexChanged);
+            lbSavedIDs.DoubleClick += new EventHandler(lbSavedIDs_DoubleClick);
 
-            // Thêm sự kiện SelectedIndexChanged cho combobox
-            this.cbMethod.SelectedIndexChanged += new System.EventHandler(this.cbMethod_SelectedIndexChanged);
-
-            // Thêm sự kiện SelectedIndexChanged cho listbox
-            this.lbSavedIDs.SelectedIndexChanged += new System.EventHandler(this.lbSavedIDs_SelectedIndexChanged);
-
-            // Thêm sự kiện DoubleClick cho listbox
-            this.lbSavedIDs.DoubleClick += new System.EventHandler(this.lbSavedIDs_DoubleClick);
-
-            // Load lịch sử game từ GameHistoryManager vào ListView
             LoadGameHistoryToListView();
-
-            // Load lịch sử quét từ ScanHistoryManager vào ListView
             LoadScanHistoryToListView();
-
-            // Hiển thị thời gian quét cuối cùng
+            SortGamesByLastUpdate(false); // Mới nhất lên đầu khi mở tool
             ShowLastScanTime();
         }
 
-        /// <summary>
-        /// Hiển thị thời gian quét cuối cùng
-        /// </summary>
         private void ShowLastScanTime()
         {
             DateTime? lastScanTime = gameHistoryManager.GetLastScanTime();
@@ -99,9 +72,6 @@ namespace SteamGamesChecker
             }
         }
 
-        /// <summary>
-        /// Load lịch sử game vào ListView
-        /// </summary>
         private void LoadGameHistoryToListView()
         {
             lvGameHistory.Items.Clear();
@@ -123,7 +93,6 @@ namespace SteamGamesChecker
                 lvGameHistory.Items.Add(item);
             }
 
-            // Lưu vào gameHistory để dùng cho các phương thức khác
             gameHistory.Clear();
             foreach (var game in allGames)
             {
@@ -131,9 +100,6 @@ namespace SteamGamesChecker
             }
         }
 
-        /// <summary>
-        /// Load lịch sử quét vào ListView
-        /// </summary>
         private void LoadScanHistoryToListView()
         {
             lvScanHistory.Items.Clear();
@@ -151,9 +117,6 @@ namespace SteamGamesChecker
             }
         }
 
-        /// <summary>
-        /// Cập nhật trạng thái menu Telegram dựa trên cấu hình hiện tại
-        /// </summary>
         private void UpdateTelegramMenuStatus()
         {
             if (telegramNotifier.IsEnabled)
@@ -168,39 +131,25 @@ namespace SteamGamesChecker
             }
         }
 
-        // Các phương thức thao tác với Telegram 
-        /// <summary>
-        /// Hiển thị form cấu hình Telegram
-        /// </summary>
         private void telegramMenuItem_Click(object sender, EventArgs e)
         {
             ShowTelegramConfigForm();
         }
 
-        /// <summary>
-        /// Hiển thị form cấu hình Telegram
-        /// </summary>
         private void ShowTelegramConfigForm()
         {
             using (TelegramConfigForm configForm = new TelegramConfigForm())
             {
                 configForm.ShowDialog();
-                // Cập nhật trạng thái menu sau khi đóng form cấu hình
                 UpdateTelegramMenuStatus();
             }
         }
 
-        /// <summary>
-        /// Xử lý sự kiện menu File > Thoát
-        /// </summary>
         private void exitMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
         }
 
-        /// <summary>
-        /// Xử lý sự kiện menu Trợ giúp > Giới thiệu
-        /// </summary>
         private void aboutMenuItem_Click(object sender, EventArgs e)
         {
             string aboutText =
@@ -218,33 +167,29 @@ namespace SteamGamesChecker
             MessageBox.Show(aboutText, "Giới thiệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        // Xử lý sự kiện khi thay đổi phương thức API
         private void cbMethod_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Hiển thị thông tin về API đã chọn
             switch (cbMethod.SelectedIndex)
             {
-                case 0: // SteamCMD API
+                case 0:
                     lblStatus.Text = "Đã chọn: SteamCMD API - Lấy thông tin chi tiết từ SteamCMD";
                     lblStatus.ForeColor = Color.DarkGreen;
                     break;
-                case 1: // XPAW API
+                case 1:
                     lblStatus.Text = "Đã chọn: XPAW API - Lấy thông tin từ XPAW Steam API";
                     lblStatus.ForeColor = Color.DarkBlue;
                     break;
-                case 2: // Steam API
+                case 2:
                     lblStatus.Text = "Đã chọn: Steam Store API - Lấy thông tin từ Steam Store";
                     lblStatus.ForeColor = Color.DarkGreen;
                     break;
             }
         }
 
-        // Xử lý sự kiện khi chọn một game trong danh sách đã lưu
         private void lbSavedIDs_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbSavedIDs.SelectedIndex != -1)
             {
-                // Lấy ID từ mục đã chọn
                 string selectedItem = lbSavedIDs.SelectedItem.ToString();
                 Match match = Regex.Match(selectedItem, @"\((\d+)\)$");
 
@@ -256,12 +201,10 @@ namespace SteamGamesChecker
             }
         }
 
-        // Xử lý sự kiện khi double-click vào một game trong danh sách đã lưu
         private void lbSavedIDs_DoubleClick(object sender, EventArgs e)
         {
             if (lbSavedIDs.SelectedIndex != -1)
             {
-                // Lấy ID từ mục đã chọn và tự động kiểm tra
                 string selectedItem = lbSavedIDs.SelectedItem.ToString();
                 Match match = Regex.Match(selectedItem, @"\((\d+)\)$");
 
@@ -269,18 +212,14 @@ namespace SteamGamesChecker
                 {
                     string appID = match.Groups[1].Value;
                     txtAppID.Text = appID;
-                    btnCheckUpdate_Click(sender, e); // Tự động kiểm tra
+                    btnCheckUpdate_Click(sender, e);
                 }
             }
         }
 
-        // Phương thức xử lý sự kiện ScanTimer_Tick
         private void ScanTimer_Tick(object sender, EventArgs e)
         {
-            // Cập nhật thời gian quét tiếp theo
             DateTime nextScan = DateTime.Now.AddMilliseconds(scanTimer.Interval);
-
-            // Gọi hàm quét tất cả game một cách bất đồng bộ
             Task.Run(async () =>
             {
                 try
@@ -305,7 +244,6 @@ namespace SteamGamesChecker
             });
         }
 
-        // Hàm cập nhật ListView
         private void UpdateListViewItem(GameInfo gameInfo)
         {
             if (gameInfo == null || string.IsNullOrEmpty(gameInfo.AppID))
@@ -333,35 +271,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Hàm chuyển đổi thời gian sang định dạng Việt Nam
-        private string ConvertToVietnamTime(string timeString)
-        {
-            if (string.IsNullOrEmpty(timeString) || timeString.Contains("Không"))
-                return timeString;
-
-            try
-            {
-                // Kiểm tra nếu đã có chuỗi định dạng Việt Nam
-                if (timeString.Contains("GMT+7") || timeString.Contains("(+7)"))
-                    return timeString;
-
-                // Phân tích chuỗi thời gian
-                DateTime time;
-                if (DateTime.TryParse(timeString, out time))
-                {
-                    // Chuyển đổi sang định dạng Việt Nam
-                    return time.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
-                }
-
-                return timeString;
-            }
-            catch
-            {
-                return timeString;
-            }
-        }
-
-        // Hàm cập nhật thanh tiến trình - ĐÃ SỬA LỖI
         private void UpdateProgressBar(int current, int total)
         {
             if (this.InvokeRequired)
@@ -377,7 +286,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Hàm sắp xếp game theo thời gian cập nhật
         private void SortGamesByLastUpdate(bool ascending)
         {
             lvGameHistory.BeginUpdate();
@@ -392,7 +300,6 @@ namespace SteamGamesChecker
 
             if (ascending)
             {
-                // Cũ nhất lên đầu
                 items.Sort((a, b) =>
                 {
                     string appIdA = a.Tag.ToString();
@@ -410,7 +317,6 @@ namespace SteamGamesChecker
             }
             else
             {
-                // Mới nhất lên đầu
                 items.Sort((a, b) =>
                 {
                     string appIdA = a.Tag.ToString();
@@ -431,10 +337,43 @@ namespace SteamGamesChecker
             lvGameHistory.EndUpdate();
         }
 
-        // Hàm xử lý sự kiện click vào cột để sắp xếp
+        private void SortScanHistoryByTime(bool ascending)
+        {
+            lvScanHistory.BeginUpdate();
+            List<ListViewItem> items = new List<ListViewItem>();
+
+            foreach (ListViewItem item in lvScanHistory.Items)
+            {
+                items.Add(item);
+            }
+
+            lvScanHistory.Items.Clear();
+
+            if (ascending)
+            {
+                items.Sort((a, b) =>
+                {
+                    DateTime timeA = DateTime.ParseExact(a.SubItems[0].Text.Split(' ')[0] + " " + a.SubItems[0].Text.Split(' ')[1], "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+                    DateTime timeB = DateTime.ParseExact(b.SubItems[0].Text.Split(' ')[0] + " " + b.SubItems[0].Text.Split(' ')[1], "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+                    return timeA.CompareTo(timeB);
+                });
+            }
+            else
+            {
+                items.Sort((a, b) =>
+                {
+                    DateTime timeA = DateTime.ParseExact(a.SubItems[0].Text.Split(' ')[0] + " " + a.SubItems[0].Text.Split(' ')[1], "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+                    DateTime timeB = DateTime.ParseExact(b.SubItems[0].Text.Split(' ')[0] + " " + b.SubItems[0].Text.Split(' ')[1], "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+                    return timeB.CompareTo(timeA);
+                });
+            }
+
+            lvScanHistory.Items.AddRange(items.ToArray());
+            lvScanHistory.EndUpdate();
+        }
+
         private void lvGameHistory_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            // Nếu click vào cột thời gian cập nhật (cột thứ 3)
             if (e.Column == 2)
             {
                 isSortedAscending = !isSortedAscending;
@@ -442,7 +381,15 @@ namespace SteamGamesChecker
             }
         }
 
-        // Hàm tải danh sách game IDs từ file
+        private void lvScanHistory_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == 0)
+            {
+                isSortedAscending = !isSortedAscending;
+                SortScanHistoryByTime(isSortedAscending);
+            }
+        }
+
         private void LoadGameIDs()
         {
             if (System.IO.File.Exists(idListPath))
@@ -472,7 +419,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Lưu danh sách game IDs vào file
         private void SaveGameIDs()
         {
             try
@@ -498,12 +444,10 @@ namespace SteamGamesChecker
             }
         }
 
-        // Phương thức thử tất cả các phương pháp để lấy thông tin game
         private async Task<GameInfo> TryAllMethods(string appID)
         {
             GameInfo info = null;
 
-            // Thử phương thức SteamCMD API
             try
             {
                 info = await GetGameInfoFromSteamCMD(appID);
@@ -517,7 +461,6 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng SteamCMD API: {ex.Message}");
             }
 
-            // Thử phương thức XPAW API
             try
             {
                 info = await GetGameInfoFromXPAW(appID);
@@ -531,7 +474,6 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng XPAW API: {ex.Message}");
             }
 
-            // Thử phương thức Steam API
             try
             {
                 info = await GetGameInfoFromSteamAPI(appID);
@@ -545,11 +487,9 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng Steam API: {ex.Message}");
             }
 
-            // Nếu không có phương thức nào thành công, trả về thông tin trống
             return new GameInfo { AppID = appID };
         }
 
-        // Phương thức lấy thông tin game từ SteamCMD API
         private async Task<GameInfo> GetGameInfoFromSteamCMD(string appID)
         {
             using (HttpClient client = new HttpClient())
@@ -572,7 +512,6 @@ namespace SteamGamesChecker
                         {
                             var gameData = data.data[appID];
 
-                            // Lấy tên game
                             if (gameData.common != null && gameData.common.name != null)
                             {
                                 info.Name = gameData.common.name;
@@ -582,27 +521,23 @@ namespace SteamGamesChecker
                                 info.Name = "Không xác định";
                             }
 
-                            // Lấy số thay đổi
                             if (gameData._change_number != null)
                             {
                                 info.ChangeNumber = (long)gameData._change_number;
                             }
 
-                            // Lấy thông tin nhà phát triển và nhà phát hành (nếu có)
                             if (gameData.extended != null)
                             {
                                 info.Developer = gameData.extended.developer ?? "Không có thông tin";
                                 info.Publisher = gameData.extended.publisher ?? "Không có thông tin";
                             }
 
-                            // Lấy thông tin cập nhật
                             if (gameData.depots != null && gameData.depots.branches != null && gameData.depots.branches.@public != null)
                             {
                                 long timestamp = (long)gameData.depots.branches.@public.timeupdated;
                                 DateTime updateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                                     .AddSeconds(timestamp);
 
-                                // Chuyển sang giờ Việt Nam (GMT+7)
                                 updateTime = updateTime.AddHours(7);
 
                                 info.LastUpdate = updateTime.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
@@ -625,7 +560,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Phương thức lấy thông tin game từ XPAW API
         private async Task<GameInfo> GetGameInfoFromXPAW(string appID)
         {
             using (HttpClient client = new HttpClient())
@@ -651,14 +585,12 @@ namespace SteamGamesChecker
                             info.Developer = gameData.extended?.developer ?? "Không có thông tin";
                             info.Publisher = gameData.extended?.publisher ?? "Không có thông tin";
 
-                            // Lấy thông tin cập nhật
                             if (gameData.time_updated != null)
                             {
                                 long timestamp = (long)gameData.time_updated;
                                 DateTime updateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                                     .AddSeconds(timestamp);
 
-                                // Chuyển sang giờ Việt Nam (GMT+7)
                                 updateTime = updateTime.AddHours(7);
 
                                 info.LastUpdate = updateTime.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
@@ -681,7 +613,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Phương thức lấy thông tin game từ Steam API
         private async Task<GameInfo> GetGameInfoFromSteamAPI(string appID)
         {
             using (HttpClient client = new HttpClient())
@@ -720,9 +651,6 @@ namespace SteamGamesChecker
                                 info.ReleaseDate = gameData.release_date.date;
                             }
 
-                            // Lưu ý: Steam API không cung cấp thời gian cập nhật
-                            // Chúng ta sẽ duy trì thông tin cập nhật hiện tại nếu có
-
                             return info;
                         }
                     }
@@ -737,7 +665,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Sửa đổi ScanAllGames để thêm phần gửi thông báo Telegram và lưu lịch sử
         private async Task ScanAllGames()
         {
             if (lbSavedIDs.Items.Count == 0)
@@ -750,12 +677,10 @@ namespace SteamGamesChecker
             List<string> failedGames = new List<string>();
             List<string> updatedGames = new List<string>();
 
-            // Hiển thị thanh tiến trình
             toolStripProgressBar1.Maximum = total;
             toolStripProgressBar1.Value = 0;
             toolStripProgressBar1.Visible = true;
 
-            // Tạo item lịch sử quét mới
             ScanHistoryItem scanHistory = new ScanHistoryItem();
             scanHistory.TotalGames = total;
             scanHistory.ApiMethod = cbMethod.SelectedItem.ToString();
@@ -780,36 +705,34 @@ namespace SteamGamesChecker
 
                     try
                     {
-                        // Ưu tiên sử dụng phương thức API đã chọn
                         GameInfo gameInfo = null;
                         int selectedMethod = cbMethod.SelectedIndex;
 
-                        if (selectedMethod == 0) // SteamCMD API
+                        if (selectedMethod == 0)
                         {
                             try
                             {
                                 gameInfo = await GetGameInfoFromSteamCMD(appID);
                             }
-                            catch { /* Tiếp tục với phương thức khác nếu gặp lỗi */ }
+                            catch { }
                         }
-                        else if (selectedMethod == 1) // XPAW API
+                        else if (selectedMethod == 1)
                         {
                             try
                             {
                                 gameInfo = await GetGameInfoFromXPAW(appID);
                             }
-                            catch { /* Tiếp tục với phương thức khác nếu gặp lỗi */ }
+                            catch { }
                         }
-                        else if (selectedMethod == 2) // Steam API
+                        else if (selectedMethod == 2)
                         {
                             try
                             {
                                 gameInfo = await GetGameInfoFromSteamAPI(appID);
                             }
-                            catch { /* Tiếp tục với phương thức khác nếu gặp lỗi */ }
+                            catch { }
                         }
 
-                        // Nếu không thành công, thử tất cả các phương thức
                         if (gameInfo == null || string.IsNullOrEmpty(gameInfo.Name) || gameInfo.Name == "Không xác định")
                         {
                             gameInfo = await TryAllMethods(appID);
@@ -818,37 +741,26 @@ namespace SteamGamesChecker
                         if (gameInfo != null && !string.IsNullOrEmpty(gameInfo.Name) && gameInfo.Name != "Không xác định")
                         {
                             successCount++;
-
-                            // Cập nhật thông tin datetime
                             gameInfo.UpdateLastUpdateDateTime();
 
-                            // Lấy thông tin game từ lịch sử để so sánh
                             GameInfo oldInfo = gameHistoryManager.GetGameInfo(appID);
                             bool isNewUpdate = false;
 
                             if (oldInfo != null)
                             {
-                                // So sánh thông tin cập nhật
                                 isNewUpdate = gameInfo.HasNewerUpdate(oldInfo);
                             }
                             else
                             {
-                                // Game mới được thêm vào, coi như có cập nhật mới
                                 isNewUpdate = gameInfo.HasRecentUpdate;
                             }
 
-                            // Lưu thông tin game vào lịch sử
-                            bool updateAdded = gameHistoryManager.AddOrUpdateGameInfo(gameInfo);
-
-                            // Cập nhật ListView
+                            gameHistoryManager.AddOrUpdateGameInfo(gameInfo);
                             UpdateListViewItem(gameInfo);
 
-                            // Lưu vào gameHistory để dùng cho các phương thức khác
                             if (!gameHistory.ContainsKey(appID))
                             {
                                 gameHistory.Add(appID, gameInfo);
-
-                                // Thêm vào ListView nếu chưa có
                                 bool existsInListView = false;
                                 foreach (ListViewItem lvItem in lvGameHistory.Items)
                                 {
@@ -881,12 +793,9 @@ namespace SteamGamesChecker
                                 UpdateListViewItem(gameInfo);
                             }
 
-                            // Thêm vào danh sách cập nhật mới
                             if (isNewUpdate && gameInfo.HasRecentUpdate)
                             {
                                 updatedGames.Add(gameInfo.Name);
-
-                                // Gửi thông báo Telegram
                                 try
                                 {
                                     await telegramNotifier.SendGameUpdateNotification(gameInfo);
@@ -910,24 +819,18 @@ namespace SteamGamesChecker
                         System.Diagnostics.Debug.WriteLine($"Lỗi khi quét game {gameName} (ID: {appID}): {ex.Message}");
                     }
 
-                    // Thêm delay nhỏ để tránh quá tải API
                     await Task.Delay(500);
                 }
             }
 
-            // Cập nhật lịch sử quét
             scanHistory.SuccessCount = successCount;
             scanHistory.FailCount = failedCount;
             scanHistory.UpdatedGames = updatedGames;
             scanHistoryManager.AddScanHistory(scanHistory);
-
-            // Cập nhật ListView lịch sử quét
             LoadScanHistoryToListView();
 
-            // Lưu thời gian quét cuối cùng
             gameHistoryManager.SaveLastScanTime();
 
-            // Hiển thị kết quả quét
             string resultMessage = $"Quét hoàn tất: {successCount} thành công, {failedCount} thất bại";
             if (updatedGames.Count > 0)
             {
@@ -939,16 +842,13 @@ namespace SteamGamesChecker
             if (successCount > 0)
             {
                 lblStatus.ForeColor = failedCount > 0 ? Color.Orange : Color.Green;
-
-                // Sắp xếp lại danh sách theo thời gian cập nhật
-                SortGamesByLastUpdate(false); // Mới nhất lên đầu
+                SortGamesByLastUpdate(false);
             }
             else
             {
                 lblStatus.ForeColor = Color.Red;
             }
 
-            // Hiển thị danh sách game thất bại nếu có
             if (failedCount > 0)
             {
                 string failedList = string.Join(Environment.NewLine, failedGames);
@@ -959,7 +859,6 @@ namespace SteamGamesChecker
             toolStripProgressBar1.Visible = false;
         }
 
-        // Phương thức xử lý sự kiện btnCheckUpdate_Click
         private async void btnCheckUpdate_Click(object sender, EventArgs e)
         {
             string appID = txtAppID.Text.Trim();
@@ -977,30 +876,26 @@ namespace SteamGamesChecker
             {
                 GameInfo gameInfo;
 
-                // Lựa chọn phương thức dựa trên combobox
                 switch (cbMethod.SelectedIndex)
                 {
-                    case 0: // SteamCMD API
+                    case 0:
                         gameInfo = await GetGameInfoFromSteamCMD(appID);
                         break;
-                    case 1: // XPAW API
+                    case 1:
                         gameInfo = await GetGameInfoFromXPAW(appID);
                         break;
-                    case 2: // Steam API
+                    case 2:
                         gameInfo = await GetGameInfoFromSteamAPI(appID);
                         break;
                     default:
-                        // Thử tất cả các phương thức nếu không xác định
                         gameInfo = await TryAllMethods(appID);
                         break;
                 }
 
                 if (gameInfo != null && !string.IsNullOrEmpty(gameInfo.Name) && gameInfo.Name != "Không xác định")
                 {
-                    // Cập nhật thông tin datetime
                     gameInfo.UpdateLastUpdateDateTime();
 
-                    // Lưu vào gameHistoryManager và cập nhật vào gameHistory
                     GameInfo oldInfo = gameHistoryManager.GetGameInfo(appID);
                     bool isNewUpdate = gameHistoryManager.AddOrUpdateGameInfo(gameInfo);
 
@@ -1008,7 +903,6 @@ namespace SteamGamesChecker
                     {
                         gameHistory.Add(appID, gameInfo);
 
-                        // Thêm vào ListView
                         ListViewItem lvItem = new ListViewItem(gameInfo.Name);
                         lvItem.SubItems.Add(gameInfo.AppID);
                         lvItem.SubItems.Add(gameInfo.GetVietnameseTimeFormat());
@@ -1022,7 +916,6 @@ namespace SteamGamesChecker
 
                         lvGameHistory.Items.Add(lvItem);
 
-                        // Hiển thị thông báo thành công
                         lblStatus.Text = $"Trạng thái: Đã kiểm tra {gameInfo.Name} - Cập nhật: {gameInfo.GetVietnameseTimeFormat()}";
                         lblStatus.ForeColor = Color.Green;
                     }
@@ -1031,16 +924,12 @@ namespace SteamGamesChecker
                         gameHistory[appID] = gameInfo;
                         UpdateListViewItem(gameInfo);
 
-                        // Hiển thị thông báo thành công
                         lblStatus.Text = $"Trạng thái: Đã cập nhật {gameInfo.Name} - Cập nhật: {gameInfo.GetVietnameseTimeFormat()}";
                         lblStatus.ForeColor = Color.Green;
 
-                        // Thông báo nếu có cập nhật mới
                         if (isNewUpdate && gameInfo.HasRecentUpdate)
                         {
                             lblStatus.Text += " - Phát hiện cập nhật mới!";
-
-                            // Hỏi người dùng có muốn gửi thông báo không
                             DialogResult result = MessageBox.Show(
                                 $"Phát hiện cập nhật mới cho game {gameInfo.Name}!\nBạn có muốn gửi thông báo qua Telegram không?",
                                 "Cập nhật mới",
@@ -1069,7 +958,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Phương thức xử lý sự kiện btnSave_Click
         private void btnSave_Click(object sender, EventArgs e)
         {
             string appID = txtAppID.Text.Trim();
@@ -1079,7 +967,6 @@ namespace SteamGamesChecker
                 return;
             }
 
-            // Lấy thông tin game từ gameHistory hoặc ListView
             string gameName = "Game " + appID;
             foreach (ListViewItem item in lvGameHistory.Items)
             {
@@ -1090,7 +977,6 @@ namespace SteamGamesChecker
                 }
             }
 
-            // Kiểm tra xem game đã tồn tại trong danh sách chưa
             bool exists = false;
             foreach (object item in lbSavedIDs.Items)
             {
@@ -1113,13 +999,11 @@ namespace SteamGamesChecker
             }
         }
 
-        // Phương thức xử lý sự kiện btnScanAll_Click
         private async void btnScanAll_Click(object sender, EventArgs e)
         {
             await ScanAllGames();
         }
 
-        // Phương thức xử lý sự kiện btnRemove_Click
         private void btnRemove_Click(object sender, EventArgs e)
         {
             if (lbSavedIDs.SelectedIndex != -1)
@@ -1135,7 +1019,6 @@ namespace SteamGamesChecker
             }
         }
 
-        // Phương thức xử lý sự kiện btnAutoScan_Click
         private void btnAutoScan_Click(object sender, EventArgs e)
         {
             if (scanTimer.Enabled)
@@ -1145,27 +1028,22 @@ namespace SteamGamesChecker
                 btnAutoScan.BackColor = SystemColors.Control;
                 lblStatus.Text = "Trạng thái: Tự động quét đã dừng";
                 lblStatus.ForeColor = SystemColors.ControlText;
-
-                // Hiển thị thời gian quét cuối
                 ShowLastScanTime();
             }
             else
             {
-                // Lấy thời gian quét từ textbox
                 if (int.TryParse(txtScanInterval.Text, out int minutes) && minutes > 0)
                 {
-                    scanTimer.Interval = minutes * 60 * 1000; // Chuyển phút thành mili giây
+                    scanTimer.Interval = minutes * 60 * 1000;
                     scanTimer.Start();
                     btnAutoScan.Text = "Dừng Tự Động";
                     btnAutoScan.BackColor = Color.LightGreen;
                     lblStatus.Text = $"Trạng thái: Tự động quét mỗi {minutes} phút";
                     lblStatus.ForeColor = Color.Green;
 
-                    // Hiển thị thông tin chi tiết
                     DateTime nextScan = DateTime.Now.AddMilliseconds(scanTimer.Interval);
                     lblStatus.Text += $" - Lần quét tiếp theo: {nextScan.ToString("HH:mm:ss")}";
 
-                    // Quét lần đầu ngay sau khi bật
                     Task.Run(async () =>
                     {
                         await ScanAllGames();
@@ -1178,13 +1056,11 @@ namespace SteamGamesChecker
             }
         }
 
-        // Thêm phương thức xử lý sự kiện cho nút cấu hình Telegram
         private void btnConfigTelegram_Click(object sender, EventArgs e)
         {
             ShowTelegramConfigForm();
         }
 
-        // Thêm phương thức xử lý sự kiện cho nút xóa lịch sử
         private void btnClearHistory_Click(object sender, EventArgs e)
         {
             DialogResult result = MessageBox.Show(
