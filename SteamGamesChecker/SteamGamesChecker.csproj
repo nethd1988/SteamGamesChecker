@@ -102,7 +102,14 @@
     <PackageReference Include="System.Text.Json" Version="7.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RemoteClientForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RemoteClientForm.Designer.cs">
+      <DependentUpon>RemoteClientForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="GameHistoryManager.cs" />
+    <Compile Include="RemoteUpdateService.cs" />
     <Compile Include="ScanHistoryItem.cs" />
     <Compile Include="TelegramConfigForm.cs">
       <SubType>Form</SubType>
