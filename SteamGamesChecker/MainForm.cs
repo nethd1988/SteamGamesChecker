@@ -98,6 +98,10 @@ namespace SteamGamesChecker
             SortGamesByLastUpdate(false);
             ShowLastScanTime();
 
+            // Cài đặt màu sắc cho thanh tiến trình
+            toolStripProgressBar1.BackColor = Color.LightGray;
+            toolStripProgressBar1.ForeColor = Color.Green;
+
             if (appConfig.AutoScanEnabled)
             {
                 StartAutoScan();
@@ -2059,35 +2063,48 @@ namespace SteamGamesChecker
 
         private void btnRemove_Click(object sender, EventArgs e)
         {
-            if (lbSavedIDs.SelectedIndex != -1)
+            if (lvGameHistory.SelectedItems.Count > 0)
             {
-                string selectedItem = lbSavedIDs.SelectedItem.ToString();
-                Match match = Regex.Match(selectedItem, @"\((\d+)\)$");
-                if (match.Success)
-                {
-                    string appID = match.Groups[1].Value;
-                    lbSavedIDs.Items.RemoveAt(lbSavedIDs.SelectedIndex);
-                    SaveGameIDs();
+                ListViewItem selectedItem = lvGameHistory.SelectedItems[0];
+                string appID = selectedItem.SubItems[1].Text; // Cột thứ 2 là ID
+                string gameName = selectedItem.SubItems[0].Text; // Cột đầu tiên là tên game
 
-                    // Xóa game khỏi lvGameHistory
-                    foreach (ListViewItem item in lvGameHistory.Items)
+                // Xác nhận xóa
+                DialogResult result = MessageBox.Show(
+                    $"Bạn có chắc chắn muốn xóa game '{gameName}' với ID {appID} không?",
+                    "Xác nhận xóa",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    // Xóa khỏi lvGameHistory
+                    lvGameHistory.Items.Remove(selectedItem);
+
+                    // Xóa khỏi gameHistory và gameHistoryManager
+                    gameHistory.Remove(appID);
+                    gameHistoryManager.RemoveGameInfo(appID);
+
+                    // Xóa khỏi lbSavedIDs
+                    for (int i = 0; i < lbSavedIDs.Items.Count; i++)
                     {
-                        if (item.Tag.ToString() == appID)
+                        string item = lbSavedIDs.Items[i].ToString();
+                        if (item.Contains($"({appID})"))
                         {
-                            lvGameHistory.Items.Remove(item);
+                            lbSavedIDs.Items.RemoveAt(i);
                             break;
                         }
                     }
 
-                    gameHistory.Remove(appID);
-                    gameHistoryManager.RemoveGameInfo(appID);
+                    // Lưu thay đổi vào file
+                    SaveGameIDs();
 
-                    MessageBox.Show($"Đã xóa {selectedItem} khỏi danh sách theo dõi!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Đã xóa game '{gameName}' với ID {appID}!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             else
             {
-                MessageBox.Show("Vui lòng chọn một game để xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Vui lòng chọn một game trong danh sách để xóa!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 

@@ -198,7 +198,8 @@
             // toolStripProgressBar1
             // 
             this.toolStripProgressBar1.Name = "toolStripProgressBar1";
-            this.toolStripProgressBar1.Size = new System.Drawing.Size(700, 16);
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(700, 20); // Tăng chiều cao lên 20
+            this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous; // Kiểu Continuous cho mượt mà
             this.toolStripProgressBar1.Visible = false;
             // 
             // toolStripLabelPercentage
@@ -290,7 +291,7 @@
             this.tabControl1.Location = new System.Drawing.Point(12, 89);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(776, 405);
+            this.tabControl1.Size = new System.Drawing.Size(776, 405); // Kích thước đã được giữ nguyên từ mã cũ
             this.tabControl1.TabIndex = 18;
             // 
             // tabPageGameList
@@ -317,7 +318,7 @@
             this.lvGameHistory.HideSelection = false;
             this.lvGameHistory.Location = new System.Drawing.Point(3, 3);
             this.lvGameHistory.Name = "lvGameHistory";
-            this.lvGameHistory.Size = new System.Drawing.Size(762, 373);
+            this.lvGameHistory.Size = new System.Drawing.Size(762, 373); // Kích thước đã được giữ nguyên từ mã cũ
             this.lvGameHistory.TabIndex = 0;
             this.lvGameHistory.UseCompatibleStateImageBehavior = false;
             this.lvGameHistory.View = System.Windows.Forms.View.Details;
