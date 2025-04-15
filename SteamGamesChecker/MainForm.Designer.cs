@@ -322,6 +322,7 @@
             this.lvGameHistory.TabIndex = 0;
             this.lvGameHistory.UseCompatibleStateImageBehavior = false;
             this.lvGameHistory.View = System.Windows.Forms.View.Details;
+            this.lvGameHistory.SelectedIndexChanged += new System.EventHandler(this.lvGameHistory_SelectedIndexChanged);
             // 
             // columnHeader1
             // 
