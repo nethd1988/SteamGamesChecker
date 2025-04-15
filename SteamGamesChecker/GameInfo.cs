@@ -43,18 +43,22 @@ namespace SteamGamesChecker
             if (LastUpdateDateTime.HasValue)
             {
                 // Kiểm tra thời gian hợp lệ và tính số ngày
-                UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                UpdateDaysCount = (int)timeDiff.TotalDays;
+
                 if (UpdateDaysCount < 0)
                 {
                     // Thời gian trong tương lai, hiển thị thông tin phù hợp
                     UpdateDaysCount = 0; // Đặt về 0 để tránh hiển thị số âm
                     Status = "Thời gian cập nhật trong tương lai";
+                    HasRecentUpdate = false; // Không coi cập nhật trong tương lai là mới
                 }
                 else
                 {
                     Status = "Đã cập nhật";
+                    // Game chỉ được coi là cập nhật mới khi số ngày < ngưỡng và >= 0
+                    HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                 }
-                HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                 return;
             }
 
@@ -76,7 +80,8 @@ namespace SteamGamesChecker
                     if (DateTime.TryParseExact(dateTimeStr, "dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
                     {
                         LastUpdateDateTime = parsedDate;
-                        UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                        TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                        UpdateDaysCount = (int)timeDiff.TotalDays;
                         HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                         Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
                         return;
@@ -101,7 +106,8 @@ namespace SteamGamesChecker
                             utcTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp);
                         }
                         LastUpdateDateTime = utcTime.AddHours(7);
-                        UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                        TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                        UpdateDaysCount = (int)timeDiff.TotalDays;
                         HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                         Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
                         return;
@@ -140,7 +146,8 @@ namespace SteamGamesChecker
                                         monthParsed = true;
                                         DateTime utcTime = new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc);
                                         LastUpdateDateTime = utcTime.AddHours(7);
-                                        UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                                        TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                                        UpdateDaysCount = (int)timeDiff.TotalDays;
                                         HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                                         Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
                                         return;
@@ -160,7 +167,8 @@ namespace SteamGamesChecker
                                     month = i + 1;
                                     DateTime utcTime = new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc);
                                     LastUpdateDateTime = utcTime.AddHours(7);
-                                    UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                                    TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                                    UpdateDaysCount = (int)timeDiff.TotalDays;
                                     HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                                     Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
                                     return;
@@ -187,7 +195,8 @@ namespace SteamGamesChecker
                         int minute = int.Parse(vnMatch.Groups[5].Value);
                         int second = int.Parse(vnMatch.Groups[6].Value);
                         LastUpdateDateTime = new DateTime(year, month, day, hour, minute, second);
-                        UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                        TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                        UpdateDaysCount = (int)timeDiff.TotalDays;
                         HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                         Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
                         return;
@@ -217,7 +226,8 @@ namespace SteamGamesChecker
                                 {
                                     LastUpdateDateTime = parsedDate;
                                 }
-                                UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                                TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                                UpdateDaysCount = (int)timeDiff.TotalDays;
                                 HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                                 Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
                                 return;
@@ -270,6 +280,7 @@ namespace SteamGamesChecker
             if (LastUpdateDateTime.HasValue && other.LastUpdateDateTime.HasValue)
             {
                 TimeSpan diff = LastUpdateDateTime.Value - other.LastUpdateDateTime.Value;
+                // Coi là cập nhật mới hơn nếu thời gian cập nhật mới hơn ít nhất 1 giây
                 return diff.TotalSeconds > 1;
             }
 
@@ -285,7 +296,8 @@ namespace SteamGamesChecker
                 DateTime utcTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp);
                 LastUpdateDateTime = utcTime.AddHours(7);
                 LastUpdate = LastUpdateDateTime.Value.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
-                UpdateDaysCount = (int)(DateTime.Now - LastUpdateDateTime.Value).TotalDays;
+                TimeSpan timeDiff = DateTime.Now - LastUpdateDateTime.Value;
+                UpdateDaysCount = (int)timeDiff.TotalDays;
                 HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                 Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
             }
@@ -305,7 +317,8 @@ namespace SteamGamesChecker
             {
                 LastUpdateDateTime = updateTime;
                 LastUpdate = updateTime.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
-                UpdateDaysCount = (int)(DateTime.Now - updateTime).TotalDays;
+                TimeSpan timeDiff = DateTime.Now - updateTime;
+                UpdateDaysCount = (int)timeDiff.TotalDays;
                 HasRecentUpdate = UpdateDaysCount >= 0 && UpdateDaysCount < 7;
                 Status = UpdateDaysCount < 0 ? "Thời gian cập nhật trong tương lai" : "Đã cập nhật";
             }

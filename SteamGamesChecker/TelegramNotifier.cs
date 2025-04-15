@@ -273,16 +273,6 @@ namespace SteamGamesChecker
                 message.AppendLine($"Cập nhật: {vietnamTime}");
                 message.AppendLine($"({gameInfo.UpdateDaysCount} ngày trước)");
 
-                //if (!string.IsNullOrEmpty(gameInfo.Developer) && gameInfo.Developer != "Không có thông tin")
-                   // message.AppendLine($"Nhà phát triển: {gameInfo.Developer}");
-
-               // if (!string.IsNullOrEmpty(gameInfo.Publisher) && gameInfo.Publisher != "Không có thông tin")
-                   // message.AppendLine($"Nhà phát hành: {gameInfo.Publisher}");
-
-                message.AppendLine("");
-                //message.AppendLine("🔗 *Liên kết:*");
-               // message.AppendLine($"[Steam Store](https://store.steampowered.com/app/{gameInfo.AppID}/)");
-               // message.AppendLine($"[SteamDB](https://steamdb.info/app/{gameInfo.AppID}/)");
                 message.AppendLine("");
                 message.AppendLine($"💡 Thông báo lúc: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")} (GMT+7)");
                 message.AppendLine("Từ *Gà Luộc Checker*");

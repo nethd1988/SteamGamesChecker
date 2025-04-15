@@ -664,7 +664,8 @@ namespace SteamGamesChecker
 
                     item.ImageKey = gameIconImageList.Images.ContainsKey(gameInfo.AppID) ? gameInfo.AppID : "default";
 
-                    if (gameInfo.HasRecentUpdate)
+                    // Cập nhật màu nền dựa trên trạng thái cập nhật
+                    if (gameInfo.HasRecentUpdate && gameInfo.UpdateDaysCount >= 0)
                     {
                         item.BackColor = Color.LightGreen;
                     }
@@ -906,7 +907,10 @@ namespace SteamGamesChecker
                                     info.LastUpdate = updateTime.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
                                     info.LastUpdateDateTime = updateTime;
                                     info.UpdateDaysCount = (int)(DateTime.Now - updateTime).TotalDays;
-                                    info.HasRecentUpdate = info.UpdateDaysCount < telegramNotifier.NotificationThreshold;
+
+                                    // Chỉ coi là cập nhật mới khi trong khoảng thời gian và không phải tương lai
+                                    TimeSpan timeDiff = DateTime.Now - updateTime;
+                                    info.HasRecentUpdate = timeDiff.TotalDays >= 0 && timeDiff.TotalDays <= telegramNotifier.NotificationThreshold;
                                 }
                             }
 
