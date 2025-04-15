@@ -1,9 +1,20 @@
-﻿namespace SteamGamesChecker
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace SteamGamesChecker
 {
     partial class MainForm
     {
+        /// <summary>
+        /// Required designer variable.
+        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
+        /// <summary>
+        /// Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -15,6 +26,10 @@
 
         #region Windows Form Designer generated code
 
+        /// <summary>
+        /// Required method for Designer support - do not modify
+        /// the contents of this method with the code editor.
+        /// </summary>
         private void InitializeComponent()
         {
             this.txtAppID = new System.Windows.Forms.TextBox();
@@ -430,6 +445,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Steam Games Checker";
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
@@ -443,45 +459,61 @@
 
         #endregion
 
-        private System.Windows.Forms.TextBox txtAppID;
-        private System.Windows.Forms.Label lblAppID;
-        private System.Windows.Forms.Button btnCheckUpdate;
-        private System.Windows.Forms.Label lblStatus;
-        private System.Windows.Forms.ComboBox cbMethod;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ListBox lbSavedIDs;
-        private System.Windows.Forms.Button btnSave;
-        private System.Windows.Forms.Button btnRemove;
-        private System.Windows.Forms.Button btnScanAll;
-        private System.Windows.Forms.Button btnAutoScan;
-        private System.Windows.Forms.TextBox txtScanInterval;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.StatusStrip statusStrip1;
-        private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
-        private System.Windows.Forms.ToolStripLabel toolStripLabelPercentage;
-        private System.Windows.Forms.MenuStrip menuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem exitMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem telegramMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem loadIconsMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem clearHistoryMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem aboutMenuItem;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.TabPage tabPageGameList;
-        private System.Windows.Forms.ListView lvGameHistory;
-        private System.Windows.Forms.ColumnHeader columnHeader1;
-        private System.Windows.Forms.ColumnHeader columnHeader2;
-        private System.Windows.Forms.ColumnHeader columnHeader3;
-        private System.Windows.Forms.ColumnHeader columnHeader4;
-        private System.Windows.Forms.TabPage tabPageScanHistory;
-        private System.Windows.Forms.ListView lvScanHistory;
-        private System.Windows.Forms.ColumnHeader columnHeader5;
-        private System.Windows.Forms.ColumnHeader columnHeader6;
-        private System.Windows.Forms.ColumnHeader columnHeader7;
-        private System.Windows.Forms.ColumnHeader columnHeader8;
-        private System.Windows.Forms.ColumnHeader columnHeader9;
+        public System.Windows.Forms.TextBox txtAppID;
+        public System.Windows.Forms.Label lblAppID;
+        public System.Windows.Forms.Button btnCheckUpdate;
+        public System.Windows.Forms.Label lblStatus;
+        public System.Windows.Forms.ComboBox cbMethod;
+        public System.Windows.Forms.Label label1;
+        public System.Windows.Forms.ListBox lbSavedIDs;
+        public System.Windows.Forms.Button btnSave;
+        public System.Windows.Forms.Button btnRemove;
+        public System.Windows.Forms.Button btnScanAll;
+        public System.Windows.Forms.Button btnAutoScan;
+        public System.Windows.Forms.TextBox txtScanInterval;
+        public System.Windows.Forms.Label label2;
+        public System.Windows.Forms.StatusStrip statusStrip1;
+        public System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        public System.Windows.Forms.ToolStripLabel toolStripLabelPercentage;
+        public System.Windows.Forms.MenuStrip menuStrip1;
+        public System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem exitMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem telegramMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem loadIconsMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem clearHistoryMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem aboutMenuItem;
+        public System.Windows.Forms.Label label3;
+        public System.Windows.Forms.TabControl tabControl1;
+        public System.Windows.Forms.TabPage tabPageGameList;
+        public System.Windows.Forms.ListView lvGameHistory;
+        public System.Windows.Forms.ColumnHeader columnHeader1;
+        public System.Windows.Forms.ColumnHeader columnHeader2;
+        public System.Windows.Forms.ColumnHeader columnHeader3;
+        public System.Windows.Forms.ColumnHeader columnHeader4;
+        public System.Windows.Forms.TabPage tabPageScanHistory;
+        public System.Windows.Forms.ListView lvScanHistory;
+        public System.Windows.Forms.ColumnHeader columnHeader5;
+        public System.Windows.Forms.ColumnHeader columnHeader6;
+        public System.Windows.Forms.ColumnHeader columnHeader7;
+        public System.Windows.Forms.ColumnHeader columnHeader8;
+        public System.Windows.Forms.ColumnHeader columnHeader9;
+
+        // Các phương thức Event Handler
+        private void btnCheckUpdate_Click(object sender, EventArgs e) { }
+        private void btnSave_Click(object sender, EventArgs e) { }
+        private void btnRemove_Click(object sender, EventArgs e) { }
+        private void btnScanAll_Click(object sender, EventArgs e) { }
+        private void btnAutoScan_Click(object sender, EventArgs e) { }
+        private void exitMenuItem_Click(object sender, EventArgs e) { }
+        private void telegramMenuItem_Click(object sender, EventArgs e) { }
+        private void loadIconsMenuItem_Click(object sender, EventArgs e) { }
+        private void clearHistoryMenuItem_Click(object sender, EventArgs e) { }
+        private void aboutMenuItem_Click(object sender, EventArgs e) { }
+        private void lvGameHistory_ColumnClick(object sender, ColumnClickEventArgs e) { }
+        private void lvScanHistory_ColumnClick(object sender, ColumnClickEventArgs e) { }
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e) { }
+        private void MainForm_Load(object sender, EventArgs e) { }
     }
 }
