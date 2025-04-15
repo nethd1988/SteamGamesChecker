@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Newtonsoft.Json;
-using System.Globalization; // Thêm để sửa CS0234
+using System.Globalization;
 
 namespace SteamGamesChecker
 {
@@ -25,6 +25,10 @@ namespace SteamGamesChecker
         private bool isClosing = false;
         private ImageList gameIconImageList;
         private Dictionary<int, bool> sortStates = new Dictionary<int, bool>(); // true: tăng dần, false: giảm dần
+        private RemoteUpdateService _remoteUpdateService;
+        private string _clientApiUrl = "http://localhost:7288";
+        private string _apiKey = "your-secure-api-key-here";
+        private bool _enableRemoteUpdate = false;
 
         private class AppConfig
         {
@@ -32,11 +36,18 @@ namespace SteamGamesChecker
             public bool AutoScanEnabled { get; set; } = false;
         }
 
+        private class RemoteUpdateConfig
+        {
+            public string ClientApiUrl { get; set; } = "http://localhost:7288";
+            public string ApiKey { get; set; } = "your-secure-api-key-here";
+            public bool EnableRemoteUpdate { get; set; } = false;
+        }
+
         private AppConfig appConfig = new AppConfig();
 
         public MainForm()
         {
-            InitializeComponent(); // Chỉ gọi một lần, không trùng lặp
+            InitializeComponent();
             scanTimer.Tick += new EventHandler(ScanTimer_Tick);
             scanTimer.Interval = 15 * 60 * 1000;
             telegramNotifier = TelegramNotifier.Instance;
@@ -93,9 +104,160 @@ namespace SteamGamesChecker
             toolStripProgressBar1.BackColor = Color.LightGray;
             toolStripProgressBar1.ForeColor = Color.Green;
 
+            LoadRemoteUpdateSettings();
+            _remoteUpdateService = new RemoteUpdateService(_clientApiUrl, _apiKey);
+
+            ToolStripMenuItem remoteMenuItem = new ToolStripMenuItem("Cấu hình Điều khiển Từ xa");
+            remoteMenuItem.Click += (s, ev) => ShowRemoteSettingsDialog();
+            toolsToolStripMenuItem.DropDownItems.Add(remoteMenuItem);
+
             if (appConfig.AutoScanEnabled)
             {
                 StartAutoScan();
+            }
+        }
+
+        private void LoadRemoteUpdateSettings()
+        {
+            try
+            {
+                if (File.Exists("remote_config.json"))
+                {
+                    string json = File.ReadAllText("remote_config.json");
+                    var config = JsonConvert.DeserializeObject<RemoteUpdateConfig>(json);
+                    if (config != null)
+                    {
+                        _clientApiUrl = config.ClientApiUrl;
+                        _apiKey = config.ApiKey;
+                        _enableRemoteUpdate = config.EnableRemoteUpdate;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi đọc cấu hình remote: {ex.Message}");
+            }
+        }
+
+        private void SaveRemoteUpdateSettings()
+        {
+            try
+            {
+                var config = new RemoteUpdateConfig
+                {
+                    ClientApiUrl = _clientApiUrl,
+                    ApiKey = _apiKey,
+                    EnableRemoteUpdate = _enableRemoteUpdate
+                };
+
+                string json = JsonConvert.SerializeObject(config, Formatting.Indented);
+                File.WriteAllText("remote_config.json", json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi lưu cấu hình remote: {ex.Message}");
+            }
+        }
+
+        private async Task HandleGameUpdateDetected(GameInfo gameInfo)
+        {
+            if (_enableRemoteUpdate && gameInfo != null && !string.IsNullOrEmpty(gameInfo.AppID))
+            {
+                try
+                {
+                    bool success = await _remoteUpdateService.SendUpdateCommandAsync(
+                        gameInfo.AppID,
+                        $"Cập nhật tự động phát hiện lúc {DateTime.Now:dd/MM/yyyy HH:mm:ss}");
+
+                    if (success)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            lblStatus.Text += " - Đã gửi lệnh cập nhật tới client";
+                        }));
+                    }
+                    else
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            lblStatus.Text += " - Không thể gửi lệnh cập nhật tới client";
+                        }));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Lỗi khi gửi lệnh cập nhật: {ex.Message}");
+                }
+            }
+        }
+
+        private void ShowRemoteSettingsDialog()
+        {
+            using (var form = new Form())
+            {
+                form.Text = "Cấu hình Điều khiển Từ xa";
+                form.Size = new Size(400, 250);
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+
+                var lblUrl = new Label { Text = "URL API Client:", Left = 20, Top = 20, Width = 120 };
+                var txtUrl = new TextBox { Text = _clientApiUrl, Left = 150, Top = 20, Width = 200 };
+
+                var lblApiKey = new Label { Text = "API Key:", Left = 20, Top = 50, Width = 120 };
+                var txtApiKey = new TextBox { Text = _apiKey, Left = 150, Top = 50, Width = 200 };
+
+                var chkEnable = new CheckBox
+                {
+                    Text = "Bật tính năng gửi lệnh cập nhật tự động",
+                    Checked = _enableRemoteUpdate,
+                    Left = 20,
+                    Top = 80,
+                    Width = 330
+                };
+
+                var btnTest = new Button { Text = "Kiểm tra kết nối", Left = 20, Top = 110, Width = 120 };
+                btnTest.Click += async (s, e) =>
+                {
+                    try
+                    {
+                        var service = new RemoteUpdateService(txtUrl.Text, txtApiKey.Text);
+                        bool success = await service.SendUpdateCommandAsync("test", "Kiểm tra kết nối");
+
+                        if (success)
+                        {
+                            MessageBox.Show("Kết nối thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Kết nối thất bại!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi: {ex.Message}", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                };
+
+                var btnSave = new Button { Text = "Lưu", Left = 175, Top = 170, Width = 90 };
+                btnSave.Click += (s, e) =>
+                {
+                    _clientApiUrl = txtUrl.Text;
+                    _apiKey = txtApiKey.Text;
+                    _enableRemoteUpdate = chkEnable.Checked;
+                    SaveRemoteUpdateSettings();
+
+                    _remoteUpdateService = new RemoteUpdateService(_clientApiUrl, _apiKey);
+                    form.DialogResult = DialogResult.OK;
+                };
+
+                var btnCancel = new Button { Text = "Hủy", Left = 275, Top = 170, Width = 90 };
+                btnCancel.Click += (s, e) => form.DialogResult = DialogResult.Cancel;
+
+                form.Controls.AddRange(new Control[] { lblUrl, txtUrl, lblApiKey, txtApiKey, chkEnable, btnTest, btnSave, btnCancel });
+
+                form.ShowDialog();
             }
         }
 
@@ -609,7 +771,8 @@ namespace SteamGamesChecker
                 "- Lưu lịch sử quét và thông báo\n" +
                 "- Thông báo cập nhật qua Telegram\n" +
                 "- Hiển thị icon game\n" +
-                "- Định dạng giờ GMT+7 (Việt Nam)\n\n" +
+                "- Định dạng giờ GMT+7 (Việt Nam)\n" +
+                "- Gửi lệnh cập nhật từ xa qua API\n\n" +
                 "© 2025";
             MessageBox.Show(aboutText, "Giới thiệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -664,7 +827,6 @@ namespace SteamGamesChecker
 
                     item.ImageKey = gameIconImageList.Images.ContainsKey(gameInfo.AppID) ? gameInfo.AppID : "default";
 
-                    // Cập nhật màu nền dựa trên trạng thái cập nhật
                     if (gameInfo.HasRecentUpdate && gameInfo.UpdateDaysCount >= 0)
                     {
                         item.BackColor = Color.LightGreen;
@@ -908,7 +1070,6 @@ namespace SteamGamesChecker
                                     info.LastUpdateDateTime = updateTime;
                                     info.UpdateDaysCount = (int)(DateTime.Now - updateTime).TotalDays;
 
-                                    // Chỉ coi là cập nhật mới khi trong khoảng thời gian và không phải tương lai
                                     TimeSpan timeDiff = DateTime.Now - updateTime;
                                     info.HasRecentUpdate = timeDiff.TotalDays >= 0 && timeDiff.TotalDays <= telegramNotifier.NotificationThreshold;
                                 }
@@ -949,7 +1110,6 @@ namespace SteamGamesChecker
             toolStripProgressBar1.Maximum = 100;
             toolStripProgressBar1.Value = 0;
             toolStripProgressBar1.Visible = true;
-            
 
             ScanHistoryItem scanHistory = null;
             if (scanHistoryManager != null)
@@ -1076,10 +1236,11 @@ namespace SteamGamesChecker
                                     {
                                         await telegramNotifier.SendGameUpdateNotification(gameInfo);
                                     }
+                                    await HandleGameUpdateDetected(gameInfo);
                                 }
                                 catch (Exception ex)
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"Lỗi gửi thông báo Telegram: {ex.Message}");
+                                    System.Diagnostics.Debug.WriteLine($"Lỗi gửi thông báo: {ex.Message}");
                                 }
                             }
                         }
@@ -1232,6 +1393,7 @@ namespace SteamGamesChecker
                                 await telegramNotifier.SendGameUpdateNotification(gameInfo);
                                 MessageBox.Show("Đã gửi thông báo!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             }
+                            await HandleGameUpdateDetected(gameInfo);
                         }
                     }
                 }
@@ -1374,6 +1536,29 @@ namespace SteamGamesChecker
         }
     }
 
+    public class RemoteUpdateService
+    {
+        private readonly string _apiUrl;
+        private readonly string _apiKey;
+
+        public RemoteUpdateService(string apiUrl, string apiKey)
+        {
+            _apiUrl = apiUrl;
+            _apiKey = apiKey;
+        }
+
+        public async Task<bool> SendUpdateCommandAsync(string appId, string message)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("X-API-KEY", _apiKey);
+                var content = new StringContent(JsonConvert.SerializeObject(new { AppId = appId, Message = message }), System.Text.Encoding.UTF8, "application/json");
+                var response = await client.PostAsync($"{_apiUrl}/api/update", content);
+                return response.IsSuccessStatusCode;
+            }
+        }
+    }
+
     public class ListViewItemComparer : System.Collections.IComparer
     {
         private int column;
@@ -1421,8 +1606,8 @@ namespace SteamGamesChecker
             }
             else if (column == 2) // Cột "Lần Cập Nhật Cuối"
             {
-                DateTime dateX = DateTime.MinValue; // Khởi tạo để tránh CS0165
-                DateTime dateY = DateTime.MinValue; // Khởi tạo để tránh CS0165
+                DateTime dateX = DateTime.MinValue;
+                DateTime dateY = DateTime.MinValue;
                 bool isDateX = DateTime.TryParseExact(textX, "dd/MM/yyyy HH:mm:ss (GMT+7)", CultureInfo.InvariantCulture, DateTimeStyles.None, out dateX);
                 bool isDateY = DateTime.TryParseExact(textY, "dd/MM/yyyy HH:mm:ss (GMT+7)", CultureInfo.InvariantCulture, DateTimeStyles.None, out dateY);
 

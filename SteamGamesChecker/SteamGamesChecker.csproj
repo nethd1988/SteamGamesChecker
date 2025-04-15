@@ -97,6 +97,10 @@
       <HintPath>..\packages\Telegram.Bot.19.0.0\lib\netstandard2.0\Telegram.Bot.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <!-- Thêm tham chiếu System.Text.Json -->
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="7.0.0" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="GameHistoryManager.cs" />
     <Compile Include="ScanHistoryItem.cs" />
