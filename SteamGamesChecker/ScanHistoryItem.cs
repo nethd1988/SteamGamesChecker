@@ -96,7 +96,7 @@ namespace SteamGamesChecker
             }
         }
 
-        private ScanHistoryManager()
+        public ScanHistoryManager()
         {
             LoadScanHistory();
         }

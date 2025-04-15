@@ -22,6 +22,7 @@ namespace SteamGamesChecker
             txtBotToken.Text = GetMaskedToken();
             chkEnable.Checked = telegramNotifier.IsEnabled;
             numNotificationDays.Value = telegramNotifier.NotificationThreshold;
+            chkSendIcon.Checked = telegramNotifier.SendIcon;
 
             // Lấy danh sách chat ID
             RefreshChatIdList();
@@ -242,6 +243,11 @@ namespace SteamGamesChecker
                 lblTestStatus.Text = "Thông báo đang TẮT";
                 lblTestStatus.ForeColor = Color.Orange;
             }
+        }
+
+        private void chkSendIcon_CheckedChanged(object sender, EventArgs e)
+        {
+            telegramNotifier.SendIcon = chkSendIcon.Checked;
         }
 
         private void numNotificationDays_ValueChanged(object sender, EventArgs e)

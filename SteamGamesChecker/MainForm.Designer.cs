@@ -67,6 +67,7 @@
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.btnClearHistory = new System.Windows.Forms.Button();
+            this.btnLoadIcons = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -409,11 +410,22 @@
             this.btnClearHistory.UseVisualStyleBackColor = true;
             this.btnClearHistory.Click += new System.EventHandler(this.btnClearHistory_Click);
             // 
+            // btnLoadIcons
+            // 
+            this.btnLoadIcons.Location = new System.Drawing.Point(399, 425);
+            this.btnLoadIcons.Name = "btnLoadIcons";
+            this.btnLoadIcons.Size = new System.Drawing.Size(94, 23);
+            this.btnLoadIcons.TabIndex = 20;
+            this.btnLoadIcons.Text = "Tải Icon Game";
+            this.btnLoadIcons.UseVisualStyleBackColor = true;
+            this.btnLoadIcons.Click += new System.EventHandler(this.btnLoadIcons_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 600);
+            this.Controls.Add(this.btnLoadIcons);
             this.Controls.Add(this.btnClearHistory);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label3);
@@ -491,5 +503,6 @@
         private System.Windows.Forms.ColumnHeader columnHeader8;
         private System.Windows.Forms.ColumnHeader columnHeader9;
         private System.Windows.Forms.Button btnClearHistory;
+        private System.Windows.Forms.Button btnLoadIcons;
     }
 }

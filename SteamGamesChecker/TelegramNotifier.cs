@@ -7,6 +7,9 @@ using Newtonsoft.Json;
 using System.IO;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+// Thêm bí danh cho Telegram.Bot.Types.File
+using TelegramFile = Telegram.Bot.Types.File;
+// Giữ bí danh cho System.IO.File
 using IOFile = System.IO.File;
 
 namespace SteamGamesChecker
@@ -22,6 +25,7 @@ namespace SteamGamesChecker
         private string configPath = "telegram_config.json";
         private bool isEnabled = false;
         private int notificationThreshold = 7; // Mặc định thông báo cho game cập nhật trong 7 ngày
+        private bool sendIcon = false; // Đặt thành false để tránh lỗi với phiên bản cũ
 
         // Singleton pattern
         private static TelegramNotifier instance;
@@ -49,6 +53,7 @@ namespace SteamGamesChecker
             public List<long> ChatIds { get; set; }
             public bool IsEnabled { get; set; }
             public int NotificationThreshold { get; set; }
+            public bool SendIcon { get; set; } = false; // Đặt mặc định là false
         }
 
         /// <summary>
@@ -63,7 +68,8 @@ namespace SteamGamesChecker
                     BotToken = botToken,
                     ChatIds = chatIds,
                     IsEnabled = isEnabled,
-                    NotificationThreshold = notificationThreshold
+                    NotificationThreshold = notificationThreshold,
+                    SendIcon = sendIcon
                 };
 
                 string json = JsonConvert.SerializeObject(config, Formatting.Indented);
@@ -93,6 +99,7 @@ namespace SteamGamesChecker
                         chatIds = config.ChatIds ?? new List<long>();
                         isEnabled = config.IsEnabled;
                         notificationThreshold = config.NotificationThreshold;
+                        sendIcon = config.SendIcon;
 
                         // Khởi tạo bot client nếu đã có token
                         if (!string.IsNullOrEmpty(botToken))
@@ -130,6 +137,19 @@ namespace SteamGamesChecker
             set
             {
                 notificationThreshold = value;
+                SaveConfig();
+            }
+        }
+
+        /// <summary>
+        /// Bật/tắt gửi icon game
+        /// </summary>
+        public bool SendIcon
+        {
+            get => sendIcon;
+            set
+            {
+                sendIcon = value;
                 SaveConfig();
             }
         }
@@ -267,11 +287,17 @@ namespace SteamGamesChecker
                 message.AppendLine($"💡 Thông báo lúc: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")} (GMT+7)");
                 message.AppendLine("Từ *Steam Games Checker*");
 
+                // Kiểm tra xem có icon game không
+                string iconPath = Path.Combine(Application.StartupPath, "icons", $"{gameInfo.AppID}.png");
+                bool hasIcon = SendIcon && IOFile.Exists(iconPath);
+
                 // Gửi tin nhắn đến tất cả các chat đã đăng ký
                 foreach (long chatId in chatIds)
                 {
                     try
                     {
+                        // Tạm thời vô hiệu hóa tính năng gửi icon để tránh lỗi
+                        // Luôn gửi dưới dạng văn bản
                         await botClient.SendTextMessageAsync(
                             chatId: chatId,
                             text: message.ToString(),
@@ -311,15 +337,18 @@ namespace SteamGamesChecker
                 message.AppendLine("");
                 message.AppendLine("⚙️ *Cấu hình hiện tại:*");
                 message.AppendLine($"- Ngưỡng thông báo: {NotificationThreshold} ngày");
+                message.AppendLine($"- Gửi icon game: {(SendIcon ? "Có" : "Không")}");
                 message.AppendLine($"- Chat ID: `{chatId}`");
                 message.AppendLine($"- Thời gian kiểm tra: {DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss")} (GMT+7)");
                 message.AppendLine("");
                 message.AppendLine("Bot đã sẵn sàng nhận thông báo về cập nhật game!");
 
+                // Luôn gửi tin nhắn văn bản để tránh lỗi
                 await botClient.SendTextMessageAsync(
                     chatId: chatId,
                     text: message.ToString(),
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown);
+
                 return true;
             }
             catch (Exception ex)

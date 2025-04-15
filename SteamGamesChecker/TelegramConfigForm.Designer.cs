@@ -45,6 +45,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.btnHelp = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
+            this.chkSendIcon = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numNotificationDays)).BeginInit();
             this.SuspendLayout();
@@ -224,11 +225,23 @@
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // chkSendIcon
+            // 
+            this.chkSendIcon.AutoSize = true;
+            this.chkSendIcon.Location = new System.Drawing.Point(15, 69);
+            this.chkSendIcon.Name = "chkSendIcon";
+            this.chkSendIcon.Size = new System.Drawing.Size(205, 17);
+            this.chkSendIcon.TabIndex = 12;
+            this.chkSendIcon.Text = "Gửi icon game cùng với thông báo";
+            this.chkSendIcon.UseVisualStyleBackColor = true;
+            this.chkSendIcon.CheckedChanged += new System.EventHandler(this.chkSendIcon_CheckedChanged);
+            // 
             // TelegramConfigForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(439, 274);
+            this.Controls.Add(this.chkSendIcon);
             this.Controls.Add(this.btnClose);
             this.Controls.Add(this.btnHelp);
             this.Controls.Add(this.label2);
@@ -275,5 +288,6 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnHelp;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.CheckBox chkSendIcon;
     }
 }
