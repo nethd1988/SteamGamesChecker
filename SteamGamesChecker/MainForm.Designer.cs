@@ -38,9 +38,10 @@
             this.exitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.telegramMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.loadIconsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.clearHistoryMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.btnConfigTelegram = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageGameList = new System.Windows.Forms.TabPage();
@@ -56,8 +57,6 @@
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader8 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader9 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.btnClearHistory = new System.Windows.Forms.Button();
-            this.btnLoadIcons = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -198,8 +197,8 @@
             // toolStripProgressBar1
             // 
             this.toolStripProgressBar1.Name = "toolStripProgressBar1";
-            this.toolStripProgressBar1.Size = new System.Drawing.Size(700, 20); // Tăng chiều cao lên 20
-            this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous; // Kiểu Continuous cho mượt mà
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(700, 20);
+            this.toolStripProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.toolStripProgressBar1.Visible = false;
             // 
             // toolStripLabelPercentage
@@ -238,7 +237,9 @@
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.telegramMenuItem});
+            this.telegramMenuItem,
+            this.loadIconsMenuItem,
+            this.clearHistoryMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
             this.toolsToolStripMenuItem.Text = "Công cụ";
@@ -246,9 +247,23 @@
             // telegramMenuItem
             // 
             this.telegramMenuItem.Name = "telegramMenuItem";
-            this.telegramMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.telegramMenuItem.Size = new System.Drawing.Size(180, 22);
             this.telegramMenuItem.Text = "Telegram Bot";
             this.telegramMenuItem.Click += new System.EventHandler(this.telegramMenuItem_Click);
+            // 
+            // loadIconsMenuItem
+            // 
+            this.loadIconsMenuItem.Name = "loadIconsMenuItem";
+            this.loadIconsMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loadIconsMenuItem.Text = "Tải Icon Game";
+            this.loadIconsMenuItem.Click += new System.EventHandler(this.loadIconsMenuItem_Click);
+            // 
+            // clearHistoryMenuItem
+            // 
+            this.clearHistoryMenuItem.Name = "clearHistoryMenuItem";
+            this.clearHistoryMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.clearHistoryMenuItem.Text = "Xóa Lịch Sử Quét";
+            this.clearHistoryMenuItem.Click += new System.EventHandler(this.clearHistoryMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -264,16 +279,6 @@
             this.aboutMenuItem.Size = new System.Drawing.Size(125, 22);
             this.aboutMenuItem.Text = "Giới thiệu";
             this.aboutMenuItem.Click += new System.EventHandler(this.aboutMenuItem_Click);
-            // 
-            // btnConfigTelegram
-            // 
-            this.btnConfigTelegram.Location = new System.Drawing.Point(71, 500);
-            this.btnConfigTelegram.Name = "btnConfigTelegram";
-            this.btnConfigTelegram.Size = new System.Drawing.Size(140, 23);
-            this.btnConfigTelegram.TabIndex = 16;
-            this.btnConfigTelegram.Text = "Cấu hình Telegram Bot";
-            this.btnConfigTelegram.UseVisualStyleBackColor = true;
-            this.btnConfigTelegram.Click += new System.EventHandler(this.btnConfigTelegram_Click);
             // 
             // label3
             // 
@@ -291,7 +296,7 @@
             this.tabControl1.Location = new System.Drawing.Point(12, 89);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(776, 405); // Kích thước đã được giữ nguyên từ mã cũ
+            this.tabControl1.Size = new System.Drawing.Size(776, 405);
             this.tabControl1.TabIndex = 18;
             // 
             // tabPageGameList
@@ -318,7 +323,7 @@
             this.lvGameHistory.HideSelection = false;
             this.lvGameHistory.Location = new System.Drawing.Point(3, 3);
             this.lvGameHistory.Name = "lvGameHistory";
-            this.lvGameHistory.Size = new System.Drawing.Size(762, 373); // Kích thước đã được giữ nguyên từ mã cũ
+            this.lvGameHistory.Size = new System.Drawing.Size(762, 373);
             this.lvGameHistory.TabIndex = 0;
             this.lvGameHistory.UseCompatibleStateImageBehavior = false;
             this.lvGameHistory.View = System.Windows.Forms.View.Details;
@@ -398,36 +403,13 @@
             this.columnHeader9.Text = "Cập nhật mới";
             this.columnHeader9.Width = 200;
             // 
-            // btnClearHistory
-            // 
-            this.btnClearHistory.Location = new System.Drawing.Point(689, 42);
-            this.btnClearHistory.Name = "btnClearHistory";
-            this.btnClearHistory.Size = new System.Drawing.Size(95, 23);
-            this.btnClearHistory.TabIndex = 19;
-            this.btnClearHistory.Text = "Xóa lịch sử quét";
-            this.btnClearHistory.UseVisualStyleBackColor = true;
-            this.btnClearHistory.Click += new System.EventHandler(this.btnClearHistory_Click);
-            // 
-            // btnLoadIcons
-            // 
-            this.btnLoadIcons.Location = new System.Drawing.Point(589, 42);
-            this.btnLoadIcons.Name = "btnLoadIcons";
-            this.btnLoadIcons.Size = new System.Drawing.Size(94, 23);
-            this.btnLoadIcons.TabIndex = 20;
-            this.btnLoadIcons.Text = "Tải Icon Game";
-            this.btnLoadIcons.UseVisualStyleBackColor = true;
-            this.btnLoadIcons.Click += new System.EventHandler(this.btnLoadIcons_Click);
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 600);
-            this.Controls.Add(this.btnLoadIcons);
-            this.Controls.Add(this.btnClearHistory);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.btnConfigTelegram);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
             this.Controls.Add(this.label2);
@@ -457,7 +439,6 @@
             this.tabPageScanHistory.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion
@@ -483,9 +464,10 @@
         private System.Windows.Forms.ToolStripMenuItem exitMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem telegramMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem loadIconsMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem clearHistoryMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem aboutMenuItem;
-        private System.Windows.Forms.Button btnConfigTelegram;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPageGameList;
@@ -501,7 +483,5 @@
         private System.Windows.Forms.ColumnHeader columnHeader7;
         private System.Windows.Forms.ColumnHeader columnHeader8;
         private System.Windows.Forms.ColumnHeader columnHeader9;
-        private System.Windows.Forms.Button btnClearHistory;
-        private System.Windows.Forms.Button btnLoadIcons;
     }
 }
