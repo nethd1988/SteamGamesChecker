@@ -2,15 +2,8 @@
 {
     partial class MainForm
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             this.txtAppID = new System.Windows.Forms.TextBox();
@@ -43,6 +32,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
+            this.toolStripLabelPercentage = new System.Windows.Forms.ToolStripLabel();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -93,7 +83,7 @@
             // 
             // btnCheckUpdate
             // 
-            this.btnCheckUpdate.Location = new System.Drawing.Point(423, 39);
+            this.btnCheckUpdate.Location = new System.Drawing.Point(425, 39);
             this.btnCheckUpdate.Name = "btnCheckUpdate";
             this.btnCheckUpdate.Size = new System.Drawing.Size(122, 23);
             this.btnCheckUpdate.TabIndex = 2;
@@ -131,14 +121,15 @@
             // lbSavedIDs
             // 
             this.lbSavedIDs.FormattingEnabled = true;
-            this.lbSavedIDs.Location = new System.Drawing.Point(12, 292);
+            this.lbSavedIDs.Location = new System.Drawing.Point(12, 500);
             this.lbSavedIDs.Name = "lbSavedIDs";
-            this.lbSavedIDs.Size = new System.Drawing.Size(300, 199);
+            this.lbSavedIDs.Size = new System.Drawing.Size(300, 43);
             this.lbSavedIDs.TabIndex = 7;
+            this.lbSavedIDs.Visible = false;
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(318, 292);
+            this.btnSave.Location = new System.Drawing.Point(217, 501);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(75, 23);
             this.btnSave.TabIndex = 8;
@@ -148,7 +139,7 @@
             // 
             // btnRemove
             // 
-            this.btnRemove.Location = new System.Drawing.Point(318, 321);
+            this.btnRemove.Location = new System.Drawing.Point(298, 501);
             this.btnRemove.Name = "btnRemove";
             this.btnRemove.Size = new System.Drawing.Size(75, 23);
             this.btnRemove.TabIndex = 9;
@@ -158,7 +149,7 @@
             // 
             // btnScanAll
             // 
-            this.btnScanAll.Location = new System.Drawing.Point(399, 292);
+            this.btnScanAll.Location = new System.Drawing.Point(379, 501);
             this.btnScanAll.Name = "btnScanAll";
             this.btnScanAll.Size = new System.Drawing.Size(94, 23);
             this.btnScanAll.TabIndex = 10;
@@ -168,7 +159,7 @@
             // 
             // btnAutoScan
             // 
-            this.btnAutoScan.Location = new System.Drawing.Point(399, 321);
+            this.btnAutoScan.Location = new System.Drawing.Point(498, 501);
             this.btnAutoScan.Name = "btnAutoScan";
             this.btnAutoScan.Size = new System.Drawing.Size(94, 23);
             this.btnAutoScan.TabIndex = 11;
@@ -178,7 +169,7 @@
             // 
             // txtScanInterval
             // 
-            this.txtScanInterval.Location = new System.Drawing.Point(399, 364);
+            this.txtScanInterval.Location = new System.Drawing.Point(680, 501);
             this.txtScanInterval.Name = "txtScanInterval";
             this.txtScanInterval.Size = new System.Drawing.Size(52, 20);
             this.txtScanInterval.TabIndex = 12;
@@ -187,7 +178,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(336, 367);
+            this.label2.Location = new System.Drawing.Point(610, 506);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(52, 13);
             this.label2.TabIndex = 13;
@@ -196,7 +187,8 @@
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripProgressBar1});
+            this.toolStripProgressBar1,
+            this.toolStripLabelPercentage});
             this.statusStrip1.Location = new System.Drawing.Point(0, 578);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(800, 22);
@@ -206,8 +198,14 @@
             // toolStripProgressBar1
             // 
             this.toolStripProgressBar1.Name = "toolStripProgressBar1";
-            this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(700, 16);
             this.toolStripProgressBar1.Visible = false;
+            // 
+            // toolStripLabelPercentage
+            // 
+            this.toolStripLabelPercentage.Name = "toolStripLabelPercentage";
+            this.toolStripLabelPercentage.Size = new System.Drawing.Size(23, 20);
+            this.toolStripLabelPercentage.Text = "0%";
             // 
             // menuStrip1
             // 
@@ -268,7 +266,7 @@
             // 
             // btnConfigTelegram
             // 
-            this.btnConfigTelegram.Location = new System.Drawing.Point(12, 500);
+            this.btnConfigTelegram.Location = new System.Drawing.Point(71, 500);
             this.btnConfigTelegram.Name = "btnConfigTelegram";
             this.btnConfigTelegram.Size = new System.Drawing.Size(140, 23);
             this.btnConfigTelegram.TabIndex = 16;
@@ -279,7 +277,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(457, 367);
+            this.label3.Location = new System.Drawing.Point(738, 504);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(28, 13);
             this.label3.TabIndex = 17;
@@ -292,7 +290,7 @@
             this.tabControl1.Location = new System.Drawing.Point(12, 89);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(776, 197);
+            this.tabControl1.Size = new System.Drawing.Size(776, 405);
             this.tabControl1.TabIndex = 18;
             // 
             // tabPageGameList
@@ -301,7 +299,7 @@
             this.tabPageGameList.Location = new System.Drawing.Point(4, 22);
             this.tabPageGameList.Name = "tabPageGameList";
             this.tabPageGameList.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageGameList.Size = new System.Drawing.Size(768, 171);
+            this.tabPageGameList.Size = new System.Drawing.Size(768, 379);
             this.tabPageGameList.TabIndex = 0;
             this.tabPageGameList.Text = "Danh sách game";
             this.tabPageGameList.UseVisualStyleBackColor = true;
@@ -319,11 +317,10 @@
             this.lvGameHistory.HideSelection = false;
             this.lvGameHistory.Location = new System.Drawing.Point(3, 3);
             this.lvGameHistory.Name = "lvGameHistory";
-            this.lvGameHistory.Size = new System.Drawing.Size(762, 165);
+            this.lvGameHistory.Size = new System.Drawing.Size(762, 373);
             this.lvGameHistory.TabIndex = 0;
             this.lvGameHistory.UseCompatibleStateImageBehavior = false;
             this.lvGameHistory.View = System.Windows.Forms.View.Details;
-            this.lvGameHistory.SelectedIndexChanged += new System.EventHandler(this.lvGameHistory_SelectedIndexChanged);
             // 
             // columnHeader1
             // 
@@ -351,7 +348,7 @@
             this.tabPageScanHistory.Location = new System.Drawing.Point(4, 22);
             this.tabPageScanHistory.Name = "tabPageScanHistory";
             this.tabPageScanHistory.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageScanHistory.Size = new System.Drawing.Size(768, 171);
+            this.tabPageScanHistory.Size = new System.Drawing.Size(768, 379);
             this.tabPageScanHistory.TabIndex = 1;
             this.tabPageScanHistory.Text = "Lịch sử quét";
             this.tabPageScanHistory.UseVisualStyleBackColor = true;
@@ -370,7 +367,7 @@
             this.lvScanHistory.HideSelection = false;
             this.lvScanHistory.Location = new System.Drawing.Point(3, 3);
             this.lvScanHistory.Name = "lvScanHistory";
-            this.lvScanHistory.Size = new System.Drawing.Size(762, 165);
+            this.lvScanHistory.Size = new System.Drawing.Size(762, 373);
             this.lvScanHistory.TabIndex = 0;
             this.lvScanHistory.UseCompatibleStateImageBehavior = false;
             this.lvScanHistory.View = System.Windows.Forms.View.Details;
@@ -402,7 +399,7 @@
             // 
             // btnClearHistory
             // 
-            this.btnClearHistory.Location = new System.Drawing.Point(693, 500);
+            this.btnClearHistory.Location = new System.Drawing.Point(689, 42);
             this.btnClearHistory.Name = "btnClearHistory";
             this.btnClearHistory.Size = new System.Drawing.Size(95, 23);
             this.btnClearHistory.TabIndex = 19;
@@ -412,7 +409,7 @@
             // 
             // btnLoadIcons
             // 
-            this.btnLoadIcons.Location = new System.Drawing.Point(399, 425);
+            this.btnLoadIcons.Location = new System.Drawing.Point(589, 42);
             this.btnLoadIcons.Name = "btnLoadIcons";
             this.btnLoadIcons.Size = new System.Drawing.Size(94, 23);
             this.btnLoadIcons.TabIndex = 20;
@@ -479,6 +476,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        private System.Windows.Forms.ToolStripLabel toolStripLabelPercentage;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exitMenuItem;

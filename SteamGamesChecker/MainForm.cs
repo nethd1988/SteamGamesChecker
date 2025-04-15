@@ -30,6 +30,7 @@ namespace SteamGamesChecker
         private ScanHistoryManager scanHistoryManager;
         private bool isClosing = false;
         private ImageList gameIconImageList;
+        private static CookieContainer cookieContainer = new CookieContainer();
 
         private class AppConfig
         {
@@ -53,15 +54,6 @@ namespace SteamGamesChecker
             LoadConfig();
 
             this.FormClosing += MainForm_FormClosing;
-        }
-
-        private void lvGameHistory_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lvGameHistory.SelectedItems.Count > 0)
-            {
-                string selectedGame = lvGameHistory.SelectedItems[0].Text;
-                MessageBox.Show($"Bạn đã chọn: {selectedGame}", "Thông tin", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
         }
 
         private void LoadScanHistoryManager()
@@ -89,7 +81,6 @@ namespace SteamGamesChecker
             cbMethod.Items.AddRange(new[] { "SteamCMD API", "Steam API", "SteamDB" });
             ApplyConfig();
 
-            // Khởi tạo ImageList cho các icon game
             InitializeImageList();
 
             lvGameHistory.ColumnClick += new ColumnClickEventHandler(lvGameHistory_ColumnClick);
@@ -101,16 +92,11 @@ namespace SteamGamesChecker
             LoadGameIDs();
             UpdateTelegramMenuStatus();
             cbMethod.SelectedIndexChanged += new EventHandler(cbMethod_SelectedIndexChanged);
-            lbSavedIDs.SelectedIndexChanged += new EventHandler(lbSavedIDs_SelectedIndexChanged);
-            lbSavedIDs.DoubleClick += new EventHandler(lbSavedIDs_DoubleClick);
 
             LoadGameHistoryToListView();
             LoadScanHistoryToListView();
             SortGamesByLastUpdate(false);
             ShowLastScanTime();
-
-            // Chuyển đổi sang GameListBox
-            ConvertToGameListBox();
 
             if (appConfig.AutoScanEnabled)
             {
@@ -124,20 +110,17 @@ namespace SteamGamesChecker
             gameIconImageList.ImageSize = new Size(24, 24);
             gameIconImageList.ColorDepth = ColorDepth.Depth32Bit;
 
-            // Tạo thư mục icons nếu chưa tồn tại
             string iconsDirectory = Path.Combine(Application.StartupPath, "icons");
             if (!Directory.Exists(iconsDirectory))
             {
                 Directory.CreateDirectory(iconsDirectory);
             }
 
-            // Tải icon mặc định
             string defaultIconPath = Path.Combine(iconsDirectory, "default.png");
             try
             {
                 if (!File.Exists(defaultIconPath))
                 {
-                    // Tạo icon mặc định đơn giản nếu chưa tồn tại
                     using (Bitmap defaultIcon = new Bitmap(24, 24))
                     {
                         using (Graphics g = Graphics.FromImage(defaultIcon))
@@ -157,7 +140,6 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi khi tạo icon mặc định: {ex.Message}");
             }
 
-            // Tải tất cả các icon đã có trong thư mục
             try
             {
                 string[] iconFiles = Directory.GetFiles(iconsDirectory, "*.png");
@@ -182,7 +164,6 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi khi tải các icon từ thư mục: {ex.Message}");
             }
 
-            // Gán ImageList cho ListView
             lvGameHistory.SmallImageList = gameIconImageList;
         }
 
@@ -195,7 +176,6 @@ namespace SteamGamesChecker
                 {
                     gameIconImageList.Images.Add(appId, Image.FromFile(iconPath));
 
-                    // Cập nhật icon cho các item trong ListView
                     foreach (ListViewItem item in lvGameHistory.Items)
                     {
                         if (item.Tag.ToString() == appId)
@@ -212,17 +192,10 @@ namespace SteamGamesChecker
             }
         }
 
-        /// <summary>
-        /// Tải và lưu icon game từ SteamDB hoặc Steam
-        /// </summary>
-        /// <param name="appId">AppID của game</param>
-        /// <param name="document">Tài liệu HTML của SteamDB (nếu có)</param>
-        /// <returns>Kết quả tải icon</returns>
         private async Task<bool> DownloadGameIcon(string appId, HtmlAgilityPack.HtmlDocument document = null)
         {
             try
             {
-                // Tạo thư mục icons nếu chưa tồn tại
                 string iconsDirectory = Path.Combine(Application.StartupPath, "icons");
                 if (!Directory.Exists(iconsDirectory))
                 {
@@ -230,19 +203,15 @@ namespace SteamGamesChecker
                 }
 
                 string iconFilePath = Path.Combine(iconsDirectory, $"{appId}.png");
-
-                // Nếu icon đã tồn tại, không tải lại
                 if (File.Exists(iconFilePath))
                 {
                     return true;
                 }
 
-                // Thử nhiều nguồn để lấy icon
                 using (HttpClient client = new HttpClient())
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36");
 
-                    // Thử trích xuất URL icon từ tài liệu SteamDB nếu có
                     string iconUrl = null;
                     if (document != null)
                     {
@@ -255,12 +224,10 @@ namespace SteamGamesChecker
                             iconUrl = imgNode.GetAttributeValue("src", null);
                             if (!string.IsNullOrEmpty(iconUrl))
                             {
-                                // Nếu URL bắt đầu bằng //
                                 if (iconUrl.StartsWith("//"))
                                 {
                                     iconUrl = "https:" + iconUrl;
                                 }
-                                // Nếu URL là tương đối
                                 else if (iconUrl.StartsWith("/"))
                                 {
                                     iconUrl = "https://steamdb.info" + iconUrl;
@@ -270,10 +237,8 @@ namespace SteamGamesChecker
                         }
                     }
 
-                    // Nếu không lấy được icon từ SteamDB, thử trực tiếp từ CDN của Steam
                     if (string.IsNullOrEmpty(iconUrl))
                     {
-                        // Thử các định dạng CDN của Steam
                         string[] cdnFormats = new string[]
                         {
                             $"https://cdn.cloudflare.steamstatic.com/steam/apps/{appId}/header.jpg",
@@ -303,7 +268,6 @@ namespace SteamGamesChecker
                             catch { }
                         }
 
-                        // Nếu vẫn không tìm thấy icon, thử dùng Steam API
                         if (string.IsNullOrEmpty(iconUrl))
                         {
                             try
@@ -334,7 +298,6 @@ namespace SteamGamesChecker
                         }
                     }
 
-                    // Nếu tìm thấy URL icon, tải về
                     if (!string.IsNullOrEmpty(iconUrl))
                     {
                         var imageResponse = await client.GetAsync(iconUrl);
@@ -342,14 +305,12 @@ namespace SteamGamesChecker
                         {
                             byte[] imageData = await imageResponse.Content.ReadAsByteArrayAsync();
 
-                            // Xử lý hình ảnh - thay đổi kích thước nếu cần
                             using (MemoryStream ms = new MemoryStream(imageData))
                             {
                                 try
                                 {
                                     using (Image originalImage = Image.FromStream(ms))
                                     {
-                                        // Tạo phiên bản thu nhỏ (32x32) làm kích thước icon chuẩn
                                         using (Image thumbnail = originalImage.GetThumbnailImage(32, 32, null, IntPtr.Zero))
                                         {
                                             thumbnail.Save(iconFilePath, System.Drawing.Imaging.ImageFormat.Png);
@@ -361,8 +322,6 @@ namespace SteamGamesChecker
                                 catch (Exception ex)
                                 {
                                     System.Diagnostics.Debug.WriteLine($"Lỗi khi xử lý hình ảnh: {ex.Message}");
-
-                                    // Nếu không chuyển đổi được, lưu trực tiếp
                                     try
                                     {
                                         File.WriteAllBytes(iconFilePath, imageData);
@@ -379,7 +338,6 @@ namespace SteamGamesChecker
                     }
                 }
 
-                // Nếu không tìm thấy icon từ bất kỳ nguồn nào, tạo icon mặc định
                 try
                 {
                     using (Bitmap defaultIcon = new Bitmap(32, 32))
@@ -410,14 +368,10 @@ namespace SteamGamesChecker
             }
         }
 
-        /// <summary>
-        /// Tải icon cho tất cả các game trong danh sách theo dõi
-        /// </summary>
         private async Task LoadAllGameIcons()
         {
             try
             {
-                // Lấy danh sách AppID từ lbSavedIDs
                 List<string> appIds = new List<string>();
                 foreach (var item in lbSavedIDs.Items)
                 {
@@ -430,7 +384,6 @@ namespace SteamGamesChecker
                     }
                 }
 
-                // Thêm các AppID từ lịch sử game
                 foreach (var game in gameHistory.Values)
                 {
                     if (!appIds.Contains(game.AppID))
@@ -447,22 +400,18 @@ namespace SteamGamesChecker
                     int loadedCount = 0;
                     foreach (string appId in appIds)
                     {
-                        // Kiểm tra xem đã có icon chưa
                         string iconPath = Path.Combine(Application.StartupPath, "icons", $"{appId}.png");
                         if (!File.Exists(iconPath))
                         {
                             await DownloadGameIcon(appId);
                             loadedCount++;
                         }
-
-                        // Tải icon vào ImageList
                         LoadGameIcon(appId);
                     }
 
                     lblStatus.Text = $"Trạng thái: Đã tải {loadedCount} icon game mới";
                     lblStatus.ForeColor = Color.Green;
 
-                    // Cập nhật các icon trong ListView
                     foreach (ListViewItem item in lvGameHistory.Items)
                     {
                         string appId = item.Tag.ToString();
@@ -481,84 +430,6 @@ namespace SteamGamesChecker
             }
         }
 
-        /// <summary>
-        /// Làm mới danh sách icon bằng cách tải lại từ thư mục
-        /// </summary>
-        private void RefreshIconList()
-        {
-            try
-            {
-                // Lưu lại các key hiện có để tránh tải lại các icon đã có
-                List<string> existingKeys = new List<string>();
-                foreach (string key in gameIconImageList.Images.Keys)
-                {
-                    existingKeys.Add(key);
-                }
-
-                // Tìm các icon mới trong thư mục
-                string iconsDirectory = Path.Combine(Application.StartupPath, "icons");
-                if (Directory.Exists(iconsDirectory))
-                {
-                    string[] iconFiles = Directory.GetFiles(iconsDirectory, "*.png");
-                    foreach (string iconFile in iconFiles)
-                    {
-                        string appId = Path.GetFileNameWithoutExtension(iconFile);
-                        if (!existingKeys.Contains(appId))
-                        {
-                            try
-                            {
-                                gameIconImageList.Images.Add(appId, Image.FromFile(iconFile));
-                                System.Diagnostics.Debug.WriteLine($"Đã thêm icon mới: {appId}");
-                            }
-                            catch (Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"Lỗi khi tải icon {iconFile}: {ex.Message}");
-                            }
-                        }
-                    }
-                }
-
-                // Cập nhật icons cho ListView và GameListBox
-                UpdateListViewIcons();
-
-                // Cập nhật lại GameListBox nếu đã chuyển đổi
-                if (lbSavedIDs is GameListBox)
-                {
-                    (lbSavedIDs as GameListBox).Invalidate();
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Lỗi khi làm mới danh sách icon: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Cập nhật các icon trong ListView
-        /// </summary>
-        private void UpdateListViewIcons()
-        {
-            try
-            {
-                foreach (ListViewItem item in lvGameHistory.Items)
-                {
-                    string appId = item.Tag.ToString();
-                    if (gameIconImageList.Images.ContainsKey(appId))
-                    {
-                        item.ImageKey = appId;
-                    }
-                    else
-                    {
-                        item.ImageKey = "default";
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Lỗi khi cập nhật icon cho ListView: {ex.Message}");
-            }
-        }
-
         private async void btnLoadIcons_Click(object sender, EventArgs e)
         {
             btnLoadIcons.Enabled = false;
@@ -574,155 +445,6 @@ namespace SteamGamesChecker
             finally
             {
                 btnLoadIcons.Enabled = true;
-            }
-        }
-
-        /// <summary>
-        /// Tạo một ListBox tùy chỉnh để hiển thị icon cùng với tên game
-        /// </summary>
-        public class GameListBox : ListBox
-        {
-            private ImageList imageList;
-
-            public GameListBox()
-            {
-                this.DrawMode = DrawMode.OwnerDrawFixed;
-                this.ItemHeight = 32; // Tăng chiều cao của mỗi item
-            }
-
-            public ImageList ImageList
-            {
-                get { return imageList; }
-                set { imageList = value; }
-            }
-
-            protected override void OnDrawItem(DrawItemEventArgs e)
-            {
-                if (e.Index < 0) return;
-
-                e.DrawBackground();
-                e.DrawFocusRectangle();
-
-                // Lấy văn bản của item
-                string text = this.Items[e.Index].ToString();
-
-                // Tìm AppID từ văn bản
-                string appId = string.Empty;
-                Match match = Regex.Match(text, @"\((\d+)\)$");
-                if (match.Success)
-                {
-                    appId = match.Groups[1].Value;
-                }
-
-                // Xác định icon
-                Image icon = null;
-                if (imageList != null && !string.IsNullOrEmpty(appId) && imageList.Images.ContainsKey(appId))
-                {
-                    icon = imageList.Images[appId];
-                }
-                else if (imageList != null && imageList.Images.ContainsKey("default"))
-                {
-                    icon = imageList.Images["default"];
-                }
-
-                // Vẽ icon nếu có
-                if (icon != null)
-                {
-                    e.Graphics.DrawImage(icon, e.Bounds.Left + 2, e.Bounds.Top + 2, 24, 24);
-                }
-
-                // Vẽ văn bản
-                using (Brush textBrush = new SolidBrush(e.ForeColor))
-                {
-                    Rectangle textRect = new Rectangle(
-                        e.Bounds.Left + (icon != null ? 30 : 2),
-                        e.Bounds.Top + 2,
-                        e.Bounds.Width - (icon != null ? 30 : 2),
-                        e.Bounds.Height - 4);
-
-                    // Vẽ tên game với phông chữ đậm hơn
-                    string gameName = text;
-                    if (match.Success)
-                    {
-                        gameName = text.Substring(0, match.Index).Trim();
-                    }
-
-                    using (Font gameFont = new Font(e.Font.FontFamily, e.Font.Size, FontStyle.Bold))
-                    {
-                        e.Graphics.DrawString(gameName, gameFont, textBrush, textRect);
-                    }
-
-                    // Vẽ AppID phía dưới nếu có
-                    if (match.Success)
-                    {
-                        string idText = match.Value;
-                        SizeF gameNameSize = e.Graphics.MeasureString(gameName, e.Font);
-
-                        // Tính toán vị trí để vẽ AppID
-                        float idX = textRect.Left;
-                        float idY = textRect.Top + gameNameSize.Height + 2;
-
-                        using (Brush idBrush = new SolidBrush(Color.Gray))
-                        {
-                            e.Graphics.DrawString(idText, e.Font, idBrush, idX, idY);
-                        }
-                    }
-                }
-
-                base.OnDrawItem(e);
-            }
-        }
-
-        // Phương thức để chuyển đổi ListBox thông thường thành GameListBox
-        private void ConvertToGameListBox()
-        {
-            try
-            {
-                // Lưu các item hiện tại
-                var currentItems = new List<object>();
-                foreach (var item in lbSavedIDs.Items)
-                {
-                    currentItems.Add(item);
-                }
-
-                // Lấy vị trí và kích thước của ListBox hiện tại
-                Point location = lbSavedIDs.Location;
-                Size size = lbSavedIDs.Size;
-                string name = lbSavedIDs.Name;
-                AnchorStyles anchor = lbSavedIDs.Anchor;
-                int tabIndex = lbSavedIDs.TabIndex;
-
-                // Tạo GameListBox mới
-                GameListBox gameListBox = new GameListBox();
-                gameListBox.Location = location;
-                gameListBox.Size = size;
-                gameListBox.Name = name;
-                gameListBox.Anchor = anchor;
-                gameListBox.TabIndex = tabIndex;
-                gameListBox.ImageList = gameIconImageList;
-
-                // Thêm các sự kiện
-                gameListBox.SelectedIndexChanged += lbSavedIDs_SelectedIndexChanged;
-                gameListBox.DoubleClick += lbSavedIDs_DoubleClick;
-
-                // Xóa ListBox cũ
-                this.Controls.Remove(lbSavedIDs);
-
-                // Thêm GameListBox mới
-                this.Controls.Add(gameListBox);
-
-                // Gán lại biến lbSavedIDs
-                lbSavedIDs = gameListBox;
-
-                // Thêm lại các item
-                foreach (var item in currentItems)
-                {
-                    lbSavedIDs.Items.Add(item);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Lỗi khi chuyển đổi sang GameListBox: {ex.Message}");
             }
         }
 
@@ -823,8 +545,6 @@ namespace SteamGamesChecker
             foreach (var game in allGames)
             {
                 game.UpdateLastUpdateDateTime();
-
-                // Tải icon game nếu tồn tại
                 LoadGameIcon(game.AppID);
 
                 ListViewItem item = new ListViewItem(game.Name);
@@ -833,7 +553,6 @@ namespace SteamGamesChecker
                 item.SubItems.Add(game.UpdateDaysCount >= 0 ? game.UpdateDaysCount.ToString() : "-1");
                 item.Tag = game.AppID;
 
-                // Thiết lập khóa icon - hoặc là appId nếu có icon, hoặc "default"
                 item.ImageKey = gameIconImageList.Images.ContainsKey(game.AppID) ? game.AppID : "default";
 
                 if (game.HasRecentUpdate)
@@ -943,35 +662,6 @@ namespace SteamGamesChecker
             }
         }
 
-        private void lbSavedIDs_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lbSavedIDs.SelectedIndex != -1)
-            {
-                string selectedItem = lbSavedIDs.SelectedItem.ToString();
-                Match match = Regex.Match(selectedItem, @"\((\d+)\)$");
-                if (match.Success)
-                {
-                    string appID = match.Groups[1].Value;
-                    txtAppID.Text = appID;
-                }
-            }
-        }
-
-        private void lbSavedIDs_DoubleClick(object sender, EventArgs e)
-        {
-            if (lbSavedIDs.SelectedIndex != -1)
-            {
-                string selectedItem = lbSavedIDs.SelectedItem.ToString();
-                Match match = Regex.Match(selectedItem, @"\((\d+)\)$");
-                if (match.Success)
-                {
-                    string appID = match.Groups[1].Value;
-                    txtAppID.Text = appID;
-                    btnCheckUpdate_Click(sender, e);
-                }
-            }
-        }
-
         private void ScanTimer_Tick(object sender, EventArgs e)
         {
             int intervalMinutes = int.Parse(txtScanInterval.Text);
@@ -1010,7 +700,6 @@ namespace SteamGamesChecker
             if (gameInfo == null || string.IsNullOrEmpty(gameInfo.AppID))
                 return;
 
-            // Tải icon nếu tồn tại
             LoadGameIcon(gameInfo.AppID);
 
             foreach (ListViewItem item in lvGameHistory.Items)
@@ -1021,7 +710,6 @@ namespace SteamGamesChecker
                     item.SubItems[2].Text = gameInfo.GetVietnameseTimeFormat();
                     item.SubItems[3].Text = gameInfo.UpdateDaysCount.ToString();
 
-                    // Cập nhật icon
                     item.ImageKey = gameIconImageList.Images.ContainsKey(gameInfo.AppID) ? gameInfo.AppID : "default";
 
                     if (gameInfo.HasRecentUpdate)
@@ -1043,12 +731,16 @@ namespace SteamGamesChecker
             {
                 this.Invoke((MethodInvoker)delegate
                 {
-                    toolStripProgressBar1.Value = current;
+                    int percentage = (int)((double)current / total * 100);
+                    toolStripProgressBar1.Value = percentage;
+                    toolStripLabelPercentage.Text = $"{percentage}%";
                 });
             }
             else
             {
-                toolStripProgressBar1.Value = current;
+                int percentage = (int)((double)current / total * 100);
+                toolStripProgressBar1.Value = percentage;
+                toolStripLabelPercentage.Text = $"{percentage}%";
             }
         }
 
@@ -1210,7 +902,6 @@ namespace SteamGamesChecker
             GameInfo info = new GameInfo { AppID = appID };
             bool hasCompleteInfo = false;
 
-            // 1. Thử SteamCMD trước (ưu tiên)
             try
             {
                 var steamCmdInfo = await GetGameInfoFromSteamCMD(appID);
@@ -1218,13 +909,11 @@ namespace SteamGamesChecker
                     steamCmdInfo.Name != "Không xác định" && steamCmdInfo.LastUpdateDateTime.HasValue)
                 {
                     System.Diagnostics.Debug.WriteLine($"SteamCMD thành công cho AppID {appID}: Cập nhật cuối = {steamCmdInfo.LastUpdate}");
-                    // Tải icon game nếu chưa có
                     await DownloadGameIcon(appID);
-                    return steamCmdInfo; // Thông tin đầy đủ, trả về ngay
+                    return steamCmdInfo;
                 }
                 else if (steamCmdInfo != null)
                 {
-                    // Thông tin một phần - gộp vào 'info'
                     MergeGameInfo(info, steamCmdInfo);
                 }
             }
@@ -1233,7 +922,6 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng SteamCMD API cho AppID {appID}: {ex.Message}");
             }
 
-            // 2. Thử SteamDB
             try
             {
                 var steamDbInfo = await GetGameInfoFromSteamDB(appID);
@@ -1241,7 +929,6 @@ namespace SteamGamesChecker
                     steamDbInfo.Name != "Không xác định" && steamDbInfo.LastUpdateDateTime.HasValue)
                 {
                     System.Diagnostics.Debug.WriteLine($"SteamDB thành công cho AppID {appID}: Cập nhật cuối = {steamDbInfo.LastUpdate}");
-                    // Gộp thông tin từ SteamCMD (nếu có) với thông tin từ SteamDB
                     MergeGameInfo(info, steamDbInfo);
                     if (steamDbInfo.LastUpdateDateTime.HasValue)
                     {
@@ -1250,7 +937,6 @@ namespace SteamGamesChecker
                 }
                 else if (steamDbInfo != null)
                 {
-                    // Thông tin một phần - gộp vào 'info'
                     MergeGameInfo(info, steamDbInfo);
                 }
             }
@@ -1259,7 +945,6 @@ namespace SteamGamesChecker
                 System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng SteamDB cho AppID {appID}: {ex.Message}");
             }
 
-            // 3. Thử Steam API nếu vẫn thiếu thông tin
             if (!hasCompleteInfo || string.IsNullOrEmpty(info.Name) || info.Name == "Không xác định")
             {
                 try
@@ -1269,7 +954,6 @@ namespace SteamGamesChecker
                         steamApiInfo.Name != "Không xác định")
                     {
                         System.Diagnostics.Debug.WriteLine($"Steam API thành công cho AppID {appID}: Tên = {steamApiInfo.Name}");
-                        // Gộp thông tin
                         MergeGameInfo(info, steamApiInfo);
                     }
                 }
@@ -1279,24 +963,42 @@ namespace SteamGamesChecker
                 }
             }
 
-            // Kiểm tra và cập nhật thông tin ngày
+            if (!hasCompleteInfo || string.IsNullOrEmpty(info.Name) || info.Name == "Không xác định")
+            {
+                try
+                {
+                    var altApiInfo = await GetGameInfoFromAlternativeAPI(appID);
+                    if (altApiInfo != null && !string.IsNullOrEmpty(altApiInfo.Name) &&
+                        altApiInfo.Name != "Không xác định")
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Alternative API thành công cho AppID {appID}: Tên = {altApiInfo.Name}");
+                        MergeGameInfo(info, altApiInfo);
+                        if (altApiInfo.LastUpdateDateTime.HasValue)
+                        {
+                            hasCompleteInfo = true;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng Alternative API cho AppID {appID}: {ex.Message}");
+                }
+            }
+
             if (info.LastUpdateDateTime.HasValue)
             {
                 info.UpdateLastUpdateDateTime();
             }
 
-            // Tải icon game nếu chưa có
             await DownloadGameIcon(appID);
 
             return info.Name != "Không xác định" ? info : new GameInfo { AppID = appID };
         }
 
-        // Phương thức để gộp thông tin game từ nhiều nguồn
         private void MergeGameInfo(GameInfo target, GameInfo source)
         {
             if (source == null) return;
 
-            // Chỉ cập nhật nếu thông tin nguồn tốt hơn thông tin hiện tại
             if (!string.IsNullOrEmpty(source.Name) && source.Name != "Không xác định")
                 target.Name = source.Name;
 
@@ -1325,299 +1027,374 @@ namespace SteamGamesChecker
         private async Task<GameInfo> GetGameInfoFromSteamDB(string appID)
         {
             System.Diagnostics.Debug.WriteLine($"Đang thử lấy thông tin từ SteamDB cho AppID: {appID}");
-            using (HttpClient client = new HttpClient(new HttpClientHandler
+
+            var handler = new HttpClientHandler
             {
                 AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate,
                 AllowAutoRedirect = true,
-                UseCookies = true
-            }))
+                UseCookies = true,
+            };
+
+            GameInfo info = new GameInfo { AppID = appID };
+
+            handler.CookieContainer = cookieContainer;
+
+            var userAgents = new string[]
             {
-                GameInfo info = new GameInfo();
-                info.AppID = appID;
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.0.0",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+            };
 
-                try
+            Random random = new Random();
+            string userAgent = userAgents[random.Next(userAgents.Length)];
+
+            int maxRetries = 3;
+            int currentRetry = 0;
+            bool success = false;
+
+            while (currentRetry < maxRetries && !success)
+            {
+                using (HttpClient client = new HttpClient(handler))
                 {
-                    // Mô phỏng trình duyệt thật với nhiều header
-                    client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36");
-                    client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
-                    client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9,vi;q=0.8");
-                    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
-                    client.DefaultRequestHeaders.Add("Referer", "https://steamdb.info/");
-                    client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-                    client.DefaultRequestHeaders.Add("Sec-Ch-Ua", "\"Chromium\";v=\"118\", \"Google Chrome\";v=\"118\"");
-                    client.DefaultRequestHeaders.Add("Sec-Ch-Ua-Mobile", "?0");
-                    client.DefaultRequestHeaders.Add("Sec-Ch-Ua-Platform", "\"Windows\"");
-                    client.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "document");
-                    client.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
-                    client.DefaultRequestHeaders.Add("Sec-Fetch-Site", "same-origin");
-                    client.DefaultRequestHeaders.Add("Sec-Fetch-User", "?1");
-                    client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
-                    client.DefaultRequestHeaders.Add("Cache-Control", "max-age=0");
-                    client.Timeout = TimeSpan.FromSeconds(25); // Tăng timeout lên 25s
-
-                    string url = $"{STEAMDB_URL_BASE}{appID}/";
-                    System.Diagnostics.Debug.WriteLine($"Đang truy cập URL SteamDB: {url}");
-
-                    // Thêm độ trễ ngẫu nhiên từ 2-8 giây để giống người dùng thực
-                    Random rnd = new Random();
-                    await Task.Delay(rnd.Next(2000, 8000));
-
-                    HttpResponseMessage response = await client.GetAsync(url);
-
-                    if (response.IsSuccessStatusCode)
+                    try
                     {
-                        string html = await response.Content.ReadAsStringAsync();
-                        System.Diagnostics.Debug.WriteLine($"Đã nhận HTML từ SteamDB ({html.Length} bytes)");
+                        client.Timeout = TimeSpan.FromSeconds(30);
 
-                        // Kiểm tra nếu bị Cloudflare chặn hoặc bảo vệ khác
-                        if (html.Contains("DDoS protection by Cloudflare") ||
-                            html.Contains("Please complete the security check") ||
-                            html.Contains("Please wait while we verify") ||
-                            html.Contains("Please enable cookies") ||
-                            html.Contains("Access denied") ||
-                            html.Contains("rate limited"))
+                        client.DefaultRequestHeaders.Clear();
+                        client.DefaultRequestHeaders.Add("User-Agent", userAgent);
+                        client.DefaultRequestHeaders.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7");
+                        client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9,vi;q=0.8");
+                        client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip, deflate, br");
+                        client.DefaultRequestHeaders.Add("Referer", "https://steamdb.info/");
+                        client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+                        client.DefaultRequestHeaders.Add("Cache-Control", "max-age=0");
+                        client.DefaultRequestHeaders.Add("Sec-Ch-Ua", "\"Google Chrome\";v=\"119\", \"Chromium\";v=\"119\", \"Not?A_Brand\";v=\"24\"");
+                        client.DefaultRequestHeaders.Add("Sec-Ch-Ua-Mobile", "?0");
+                        client.DefaultRequestHeaders.Add("Sec-Ch-Ua-Platform", "\"Windows\"");
+                        client.DefaultRequestHeaders.Add("Sec-Fetch-Dest", "document");
+                        client.DefaultRequestHeaders.Add("Sec-Fetch-Mode", "navigate");
+                        client.DefaultRequestHeaders.Add("Sec-Fetch-Site", "same-origin");
+                        client.DefaultRequestHeaders.Add("Sec-Fetch-User", "?1");
+                        client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
+                        client.DefaultRequestHeaders.Add("Priority", "u=0, i");
+                        client.DefaultRequestHeaders.Add("DNT", "1");
+
+                        int delayMs = random.Next(8000, 15000);
+                        System.Diagnostics.Debug.WriteLine($"Delay {delayMs}ms trước khi gửi request...");
+                        await Task.Delay(delayMs);
+
+                        string url = currentRetry == 0 ? $"{STEAMDB_URL_BASE}{appID}/" : $"{STEAMDB_URL_BASE}{appID}/history/";
+                        System.Diagnostics.Debug.WriteLine($"Đang truy cập URL SteamDB: {url}");
+
+                        var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+
+                        if (response.IsSuccessStatusCode)
                         {
-                            System.Diagnostics.Debug.WriteLine("Bị chặn bởi Cloudflare hoặc hệ thống bảo vệ, không thể lấy dữ liệu từ SteamDB");
-                            return info;
-                        }
+                            string html = await response.Content.ReadAsStringAsync();
+                            System.Diagnostics.Debug.WriteLine($"Đã nhận HTML từ SteamDB ({html.Length} bytes)");
 
-                        HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-                        doc.LoadHtml(html);
-
-                        // Xác minh nội dung trang là trang app hợp lệ
-                        var titleNode = doc.DocumentNode.SelectSingleNode("//title");
-                        if (titleNode != null)
-                        {
-                            string title = titleNode.InnerText.Trim();
-                            System.Diagnostics.Debug.WriteLine($"SteamDB - Tiêu đề trang: {title}");
-
-                            if (title.Contains("Error") || title.Contains("Not Found") || title == "SteamDB")
+                            if (html.Contains("DDoS protection by Cloudflare") ||
+                                html.Contains("Please complete the security check") ||
+                                html.Contains("Please wait while we verify") ||
+                                html.Contains("Please enable cookies") ||
+                                html.Contains("Access denied") ||
+                                html.Contains("rate limited"))
                             {
-                                System.Diagnostics.Debug.WriteLine("SteamDB trả về trang lỗi hoặc không tìm thấy");
-                                return info;
+                                System.Diagnostics.Debug.WriteLine("Bị chặn bởi Cloudflare hoặc hệ thống bảo vệ, đang thử lại...");
+                                currentRetry++;
+                                continue;
                             }
-                        }
 
-                        // Trích xuất tên game - thử nhiều bộ chọn vì SteamDB có thể thay đổi cấu trúc
-                        var nameNode = doc.DocumentNode.SelectSingleNode("//h1[@itemprop='name']") ??
-                                      doc.DocumentNode.SelectSingleNode("//h1[contains(@class, 'app-name')]") ??
-                                      doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'app-header')]/h1");
+                            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+                            doc.LoadHtml(html);
 
-                        if (nameNode != null)
-                        {
-                            info.Name = HttpUtility.HtmlDecode(nameNode.InnerText.Trim());
-                            System.Diagnostics.Debug.WriteLine($"SteamDB - Tên: {info.Name}");
-                        }
-
-                        // Trích xuất thông tin nhà phát triển
-                        var devNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Developer']]/td[2]") ??
-                                      doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Developer')]]/td[2]") ??
-                                      doc.DocumentNode.SelectSingleNode("//div[contains(text(), 'Developer')]/following-sibling::div");
-                        if (devNode != null)
-                        {
-                            info.Developer = HttpUtility.HtmlDecode(devNode.InnerText.Trim());
-                            System.Diagnostics.Debug.WriteLine($"SteamDB - Nhà phát triển: {info.Developer}");
-                        }
-
-                        // Trích xuất thông tin nhà phát hành
-                        var pubNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Publisher']]/td[2]") ??
-                                      doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Publisher')]]/td[2]") ??
-                                      doc.DocumentNode.SelectSingleNode("//div[contains(text(), 'Publisher')]/following-sibling::div");
-                        if (pubNode != null)
-                        {
-                            info.Publisher = HttpUtility.HtmlDecode(pubNode.InnerText.Trim());
-                            System.Diagnostics.Debug.WriteLine($"SteamDB - Nhà phát hành: {info.Publisher}");
-                        }
-
-                        // Trích xuất ngày phát hành
-                        var releaseDateNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Release Date']]/td[2]") ??
-                                             doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Release Date')]]/td[2]") ??
-                                             doc.DocumentNode.SelectSingleNode("//div[contains(text(), 'Release Date')]/following-sibling::div");
-                        if (releaseDateNode != null)
-                        {
-                            info.ReleaseDate = HttpUtility.HtmlDecode(releaseDateNode.InnerText.Trim());
-                            System.Diagnostics.Debug.WriteLine($"SteamDB - Ngày phát hành: {info.ReleaseDate}");
-                        }
-
-                        // Tìm thời gian cập nhật bằng nhiều cách tiếp cận
-                        DateTime? updateDateTime = null;
-
-                        // Cách 1: Tìm các phần tử thời gian với thuộc tính datetime
-                        var timeNodes = doc.DocumentNode.SelectNodes("//time[@datetime]");
-                        if (timeNodes != null)
-                        {
-                            foreach (var timeNode in timeNodes)
+                            var titleNode = doc.DocumentNode.SelectSingleNode("//title");
+                            if (titleNode != null)
                             {
-                                string dateAttr = timeNode.GetAttributeValue("datetime", null);
-                                if (!string.IsNullOrEmpty(dateAttr) && DateTimeOffset.TryParse(dateAttr, out DateTimeOffset dto))
+                                string title = titleNode.InnerText.Trim();
+                                System.Diagnostics.Debug.WriteLine($"SteamDB - Tiêu đề trang: {title}");
+
+                                if (title.Contains("Error") || title.Contains("Not Found") || title == "SteamDB")
                                 {
-                                    // Lấy ngày gần nhất nếu tìm thấy nhiều
-                                    DateTime utcTime = dto.UtcDateTime;
-                                    if (!updateDateTime.HasValue || utcTime > updateDateTime.Value)
-                                    {
-                                        updateDateTime = utcTime;
-                                        System.Diagnostics.Debug.WriteLine($"SteamDB - Tìm thấy datetime: {dateAttr}, đã phân tích thành {utcTime}");
-                                    }
+                                    System.Diagnostics.Debug.WriteLine("SteamDB trả về trang lỗi hoặc không tìm thấy");
+                                    currentRetry++;
+                                    continue;
                                 }
                             }
-                        }
 
-                        // Cách 2: Tìm cụ thể thông tin cập nhật cuối
-                        var updateNode = doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Last Record Update')]]/td[2]/time") ??
-                                       doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Last Update')]]/td[2]/time") ??
-                                       doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'package-header')]/following-sibling::div//time");
-
-                        if (updateNode != null)
-                        {
-                            string dateAttr = updateNode.GetAttributeValue("datetime", null);
-                            if (!string.IsNullOrEmpty(dateAttr) && DateTimeOffset.TryParse(dateAttr, out DateTimeOffset dto))
+                            string gameName = ExtractGameNameFromSteamDB(doc, appID);
+                            if (!string.IsNullOrEmpty(gameName))
                             {
-                                DateTime utcTime = dto.UtcDateTime;
-                                // Chỉ ghi đè nếu cập nhật gần đây hơn
-                                if (!updateDateTime.HasValue || utcTime > updateDateTime.Value)
-                                {
-                                    updateDateTime = utcTime;
-                                    System.Diagnostics.Debug.WriteLine($"SteamDB - Last update datetime: {dateAttr}, đã phân tích thành {utcTime}");
-                                }
+                                info.Name = gameName;
+                                System.Diagnostics.Debug.WriteLine($"SteamDB - Tên: {info.Name}");
                             }
-                            // Nếu không phân tích được thuộc tính datetime, thử nội dung bên trong
-                            else
+
+                            var devNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Developer']]/td[2]") ??
+                                          doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Developer')]]/td[2]") ??
+                                          doc.DocumentNode.SelectSingleNode("//div[contains(text(), 'Developer')]/following-sibling::div");
+                            if (devNode != null)
                             {
-                                string innerText = updateNode.InnerText.Trim();
-                                System.Diagnostics.Debug.WriteLine($"SteamDB - Nội dung update: {innerText}");
-                                var match = Regex.Match(innerText, @"(\d+)\s+([A-Za-z]+)\s+(\d{4})\s*[-–]\s*(\d{1,2}):(\d{1,2}):(\d{1,2})");
-                                if (match.Success)
-                                {
-                                    try
-                                    {
-                                        int day = int.Parse(match.Groups[1].Value);
-                                        string monthName = match.Groups[2].Value;
-                                        int year = int.Parse(match.Groups[3].Value);
-                                        int hour = int.Parse(match.Groups[4].Value);
-                                        int minute = int.Parse(match.Groups[5].Value);
-                                        int second = int.Parse(match.Groups[6].Value);
-
-                                        string[] englishMonths = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
-                                        int month = -1;
-
-                                        for (int i = 0; i < englishMonths.Length; i++)
-                                        {
-                                            if (string.Compare(monthName, englishMonths[i], StringComparison.OrdinalIgnoreCase) == 0)
-                                            {
-                                                month = i + 1;
-                                                break;
-                                            }
-                                        }
-
-                                        if (month > 0)
-                                        {
-                                            DateTime parsedDate = new DateTime(year, month, day, hour, minute, second, DateTimeKind.Utc);
-                                            if (!updateDateTime.HasValue || parsedDate > updateDateTime.Value)
-                                            {
-                                                updateDateTime = parsedDate;
-                                                System.Diagnostics.Debug.WriteLine($"SteamDB - Phân tích ngày từ văn bản: {parsedDate}");
-                                            }
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        System.Diagnostics.Debug.WriteLine($"Lỗi phân tích văn bản ngày: {ex.Message}");
-                                    }
-                                }
+                                info.Developer = HttpUtility.HtmlDecode(devNode.InnerText.Trim());
+                                System.Diagnostics.Debug.WriteLine($"SteamDB - Nhà phát triển: {info.Developer}");
                             }
-                        }
 
-                        // Cách 3: Tìm bất kỳ văn bản nào có thể chứa mẫu ngày tháng
-                        if (!updateDateTime.HasValue)
-                        {
-                            var dateTextNodes = doc.DocumentNode.SelectNodes("//td[contains(text(), 'Updated')] | //td[contains(text(), 'Last Record')] | //div[contains(text(), 'Updated')]");
-                            if (dateTextNodes != null)
+                            var pubNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Publisher']]/td[2]") ??
+                                          doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Publisher')]]/td[2]") ??
+                                          doc.DocumentNode.SelectSingleNode("//div[contains(text(), 'Publisher')]/following-sibling::div");
+                            if (pubNode != null)
                             {
-                                foreach (var node in dateTextNodes)
-                                {
-                                    string text = node.InnerText.Trim();
-                                    foreach (Match match in Regex.Matches(text, @"(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})"))
-                                    {
-                                        try
-                                        {
-                                            string datePart = match.Groups[0].Value;
-                                            DateTime parsedDate;
-                                            if (DateTime.TryParse(datePart, out parsedDate))
-                                            {
-                                                if (!updateDateTime.HasValue || parsedDate > updateDateTime.Value)
-                                                {
-                                                    updateDateTime = parsedDate;
-                                                    System.Diagnostics.Debug.WriteLine($"SteamDB - Tìm thấy ngày trong văn bản: {datePart}, phân tích thành {parsedDate}");
-                                                }
-                                            }
-                                        }
-                                        catch { }
-                                    }
-                                }
+                                info.Publisher = HttpUtility.HtmlDecode(pubNode.InnerText.Trim());
+                                System.Diagnostics.Debug.WriteLine($"SteamDB - Nhà phát hành: {info.Publisher}");
                             }
-                        }
 
-                        // Áp dụng thời gian cập nhật nếu tìm thấy
-                        if (updateDateTime.HasValue)
-                        {
-                            // Chuyển đổi UTC sang GMT+7 (giờ Việt Nam)
-                            DateTime localTime = updateDateTime.Value.AddHours(7);
-                            info.LastUpdateDateTime = localTime;
-                            info.LastUpdate = localTime.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
-                            info.UpdateDaysCount = (int)(DateTime.Now - localTime).TotalDays;
-                            info.HasRecentUpdate = info.UpdateDaysCount < telegramNotifier.NotificationThreshold;
-                            System.Diagnostics.Debug.WriteLine($"SteamDB - Thời gian cập nhật cuối: {info.LastUpdate}, Số ngày trước: {info.UpdateDaysCount}");
-                        }
-
-                        // Trích xuất Change Number
-                        var changeNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Last Change Number']]/td[2]") ??
-                                       doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Change Number')]]/td[2]");
-                        if (changeNode != null)
-                        {
-                            string changeText = changeNode.InnerText.Trim();
-                            // Trích xuất chỉ số nếu có văn bản bổ sung
-                            Match changeMatch = Regex.Match(changeText, @"\d+");
-                            if (changeMatch.Success)
+                            var releaseDateNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Release Date']]/td[2]") ??
+                                                 doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Release Date')]]/td[2]") ??
+                                                 doc.DocumentNode.SelectSingleNode("//div[contains(text(), 'Release Date')]/following-sibling::div");
+                            if (releaseDateNode != null)
                             {
-                                if (long.TryParse(changeMatch.Value, out long changeNumber))
+                                info.ReleaseDate = HttpUtility.HtmlDecode(releaseDateNode.InnerText.Trim());
+                                System.Diagnostics.Debug.WriteLine($"SteamDB - Ngày phát hành: {info.ReleaseDate}");
+                            }
+
+                            DateTime? updateDateTime = ExtractUpdateDateTimeFromSteamDB(doc);
+
+                            if (updateDateTime.HasValue)
+                            {
+                                DateTime localTime = updateDateTime.Value.AddHours(7);
+                                info.LastUpdateDateTime = localTime;
+                                info.LastUpdate = localTime.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
+                                info.UpdateDaysCount = (int)(DateTime.Now - localTime).TotalDays;
+                                info.HasRecentUpdate = info.UpdateDaysCount < telegramNotifier.NotificationThreshold;
+                                System.Diagnostics.Debug.WriteLine($"SteamDB - Thời gian cập nhật cuối: {info.LastUpdate}, Số ngày trước: {info.UpdateDaysCount}");
+                            }
+
+                            var changeNode = doc.DocumentNode.SelectSingleNode("//tr[td[text()='Last Change Number']]/td[2]") ??
+                                           doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Change Number')]]/td[2]");
+                            if (changeNode != null)
+                            {
+                                string changeText = changeNode.InnerText.Trim();
+                                Match changeMatch = Regex.Match(changeText, @"\d+");
+                                if (changeMatch.Success && long.TryParse(changeMatch.Value, out long changeNumber))
                                 {
                                     info.ChangeNumber = changeNumber;
                                     System.Diagnostics.Debug.WriteLine($"SteamDB - Change Number: {info.ChangeNumber}");
                                 }
                             }
-                        }
 
-                        // Tải icon game
-                        try
-                        {
-                            await DownloadGameIcon(appID, doc);
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Lỗi khi tải icon game từ SteamDB: {ex.Message}");
-                        }
+                            try
+                            {
+                                await DownloadGameIcon(appID, doc);
+                            }
+                            catch (Exception ex)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"Lỗi khi tải icon game từ SteamDB: {ex.Message}");
+                            }
 
-                        return info;
+                            success = true;
+                            return info;
+                        }
+                        else if ((int)response.StatusCode == 429 || (int)response.StatusCode == 403)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"SteamDB đã chặn yêu cầu - Mã trạng thái: {response.StatusCode}");
+                            currentRetry++;
+                            await Task.Delay(random.Next(15000, 30000));
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"SteamDB - HTTP request thất bại. Mã trạng thái: {response.StatusCode}");
+                            currentRetry++;
+                        }
                     }
-                    else if ((int)response.StatusCode == 429 ||
-                            (int)response.StatusCode == 403)
+                    catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"SteamDB đã chặn yêu cầu của chúng ta. Mã trạng thái: {response.StatusCode}");
-                        // Có thể thêm logic thử lại với thời gian chờ tăng dần ở đây nếu cần
-                        return info;
+                        System.Diagnostics.Debug.WriteLine($"Lỗi SteamDB cho AppID {appID}: {ex.Message}");
+                        currentRetry++;
                     }
-                    else
+                }
+            }
+
+            return info;
+        }
+
+        private string ExtractGameNameFromSteamDB(HtmlAgilityPack.HtmlDocument doc, string appId)
+        {
+            var nameNode = doc.DocumentNode.SelectSingleNode("//h1[@itemprop='name']") ??
+                           doc.DocumentNode.SelectSingleNode("//h1[contains(@class, 'app-name')]") ??
+                           doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'app-header')]/h1") ??
+                           doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'pagehead')]//h1") ??
+                           doc.DocumentNode.SelectSingleNode($"//a[@href='/app/{appId}/']");
+
+            if (nameNode != null)
+            {
+                return HttpUtility.HtmlDecode(nameNode.InnerText.Trim());
+            }
+
+            var titleNode = doc.DocumentNode.SelectSingleNode("//title");
+            if (titleNode != null)
+            {
+                string title = titleNode.InnerText.Trim();
+                if (title.Contains(" · "))
+                {
+                    return title.Split(new[] { " · " }, StringSplitOptions.None)[0].Trim();
+                }
+            }
+
+            return null;
+        }
+
+        private DateTime? ExtractUpdateDateTimeFromSteamDB(HtmlAgilityPack.HtmlDocument doc)
+        {
+            DateTime? updateDateTime = null;
+
+            var timeNodes = doc.DocumentNode.SelectNodes("//time[@datetime]");
+            if (timeNodes != null)
+            {
+                foreach (var timeNode in timeNodes)
+                {
+                    string dateAttr = timeNode.GetAttributeValue("datetime", null);
+                    if (!string.IsNullOrEmpty(dateAttr) && DateTimeOffset.TryParse(dateAttr, out DateTimeOffset dto))
                     {
-                        System.Diagnostics.Debug.WriteLine($"SteamDB - Yêu cầu HTTP thất bại. Mã trạng thái: {response.StatusCode}");
-                        return info;
+                        DateTime utcTime = dto.UtcDateTime;
+                        if (!updateDateTime.HasValue || utcTime > updateDateTime.Value)
+                        {
+                            updateDateTime = utcTime;
+                            System.Diagnostics.Debug.WriteLine($"SteamDB - Tìm thấy datetime: {dateAttr}, đã phân tích thành {utcTime}");
+                        }
+                    }
+                }
+            }
+
+            var updateNode = doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Last Record Update')]]/td[2]/time") ??
+                           doc.DocumentNode.SelectSingleNode("//tr[td[contains(text(), 'Last Update')]]/td[2]/time") ??
+                           doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'package-header')]/following-sibling::div//time");
+
+            if (updateNode != null)
+            {
+                string dateAttr = updateNode.GetAttributeValue("datetime", null);
+                if (!string.IsNullOrEmpty(dateAttr) && DateTimeOffset.TryParse(dateAttr, out DateTimeOffset dto))
+                {
+                    DateTime utcTime = dto.UtcDateTime;
+                    if (!updateDateTime.HasValue || utcTime > updateDateTime.Value)
+                    {
+                        updateDateTime = utcTime;
+                        System.Diagnostics.Debug.WriteLine($"SteamDB - Last update datetime: {dateAttr}, đã phân tích thành {utcTime}");
+                    }
+                }
+                else
+                {
+                    string innerText = updateNode.InnerText.Trim();
+                    System.Diagnostics.Debug.WriteLine($"SteamDB - Nội dung update: {innerText}");
+                    ParseDateFromText(innerText, ref updateDateTime);
+                }
+            }
+
+            var historyRows = doc.DocumentNode.SelectNodes("//table[contains(@class, 'table-records')]/tbody/tr");
+            if (historyRows != null && historyRows.Count > 0)
+            {
+                foreach (var row in historyRows.Take(5))
+                {
+                    var timeCell = row.SelectSingleNode(".//td[contains(@class, 'timeago')]/time");
+                    if (timeCell != null)
+                    {
+                        string dateAttr = timeCell.GetAttributeValue("datetime", null);
+                        if (!string.IsNullOrEmpty(dateAttr) && DateTimeOffset.TryParse(dateAttr, out DateTimeOffset dto))
+                        {
+                            DateTime utcTime = dto.UtcDateTime;
+                            if (!updateDateTime.HasValue || utcTime > updateDateTime.Value)
+                            {
+                                updateDateTime = utcTime;
+                                System.Diagnostics.Debug.WriteLine($"SteamDB - History datetime: {dateAttr}, đã phân tích thành {utcTime}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!updateDateTime.HasValue)
+            {
+                var dateTextNodes = doc.DocumentNode.SelectNodes("//td[contains(text(), 'Updated')] | //td[contains(text(), 'Last Record')] | //div[contains(text(), 'Updated')]");
+                if (dateTextNodes != null)
+                {
+                    foreach (var node in dateTextNodes)
+                    {
+                        string text = node.InnerText.Trim();
+                        ParseDateFromText(text, ref updateDateTime);
+                    }
+                }
+            }
+
+            return updateDateTime;
+        }
+
+        private void ParseDateFromText(string text, ref DateTime? updateDateTime)
+        {
+            foreach (Match match in Regex.Matches(text, @"(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})"))
+            {
+                try
+                {
+                    string datePart = match.Groups[0].Value;
+                    DateTime parsedDate;
+                    if (DateTime.TryParse(datePart, out parsedDate))
+                    {
+                        if (!updateDateTime.HasValue || parsedDate > updateDateTime.Value)
+                        {
+                            updateDateTime = parsedDate;
+                            System.Diagnostics.Debug.WriteLine($"SteamDB - Phân tích ngày từ văn bản: {datePart} thành {parsedDate}");
+                        }
+                        continue;
+                    }
+
+                    int day = int.Parse(match.Groups[1].Value);
+                    string monthName = match.Groups[2].Value;
+                    int year = int.Parse(match.Groups[3].Value);
+
+                    string[] englishMonths = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+                    int month = -1;
+
+                    for (int i = 0; i < englishMonths.Length; i++)
+                    {
+                        if (string.Compare(monthName, englishMonths[i], StringComparison.OrdinalIgnoreCase) == 0)
+                        {
+                            month = i + 1;
+                            break;
+                        }
+                    }
+
+                    if (month > 0)
+                    {
+                        DateTime newDate = new DateTime(year, month, day);
+                        if (!updateDateTime.HasValue || newDate > updateDateTime.Value)
+                        {
+                            updateDateTime = newDate;
+                            System.Diagnostics.Debug.WriteLine($"SteamDB - Phân tích ngày thủ công: {day} {monthName} {year} thành {newDate}");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Lỗi SteamDB cho AppID {appID}: {ex.Message}");
-                    return info;
+                    System.Diagnostics.Debug.WriteLine($"Lỗi phân tích ngày: {ex.Message}");
                 }
+            }
+
+            foreach (Match match in Regex.Matches(text, @"\b(\d{4}[-/]\d{1,2}[-/]\d{1,2})\b"))
+            {
+                try
+                {
+                    string datePart = match.Groups[1].Value;
+                    DateTime parsedDate;
+                    if (DateTime.TryParse(datePart, out parsedDate))
+                    {
+                        if (!updateDateTime.HasValue || parsedDate > updateDateTime.Value)
+                        {
+                            updateDateTime = parsedDate;
+                            System.Diagnostics.Debug.WriteLine($"SteamDB - Phân tích ngày ISO: {datePart} thành {parsedDate}");
+                        }
+                    }
+                }
+                catch { }
             }
         }
 
@@ -1625,8 +1402,7 @@ namespace SteamGamesChecker
         {
             using (HttpClient client = new HttpClient())
             {
-                GameInfo info = new GameInfo();
-                info.AppID = appID;
+                GameInfo info = new GameInfo { AppID = appID };
 
                 try
                 {
@@ -1702,8 +1478,7 @@ namespace SteamGamesChecker
         {
             using (HttpClient client = new HttpClient())
             {
-                GameInfo info = new GameInfo();
-                info.AppID = appID;
+                GameInfo info = new GameInfo { AppID = appID };
 
                 try
                 {
@@ -1755,6 +1530,129 @@ namespace SteamGamesChecker
             }
         }
 
+        private async Task<GameInfo> GetGameInfoFromAlternativeAPI(string appID)
+        {
+            GameInfo info = new GameInfo { AppID = appID };
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36");
+
+                    string steamSpyUrl = $"https://steamspy.com/api.php?request=appdetails&appid={appID}";
+                    var response = await client.GetAsync(steamSpyUrl);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string json = await response.Content.ReadAsStringAsync();
+                        dynamic data = JsonConvert.DeserializeObject(json);
+
+                        if (data != null)
+                        {
+                            if (data.name != null)
+                            {
+                                info.Name = data.name.ToString();
+                                System.Diagnostics.Debug.WriteLine($"SteamSpy - Tên: {info.Name}");
+                            }
+
+                            if (data.developer != null)
+                            {
+                                info.Developer = data.developer.ToString();
+                                System.Diagnostics.Debug.WriteLine($"SteamSpy - Nhà phát triển: {info.Developer}");
+                            }
+
+                            if (data.publisher != null)
+                            {
+                                info.Publisher = data.publisher.ToString();
+                                System.Diagnostics.Debug.WriteLine($"SteamSpy - Nhà phát hành: {info.Publisher}");
+                            }
+
+                            if (data.releasedate != null)
+                            {
+                                info.ReleaseDate = data.releasedate.ToString();
+                                System.Diagnostics.Debug.WriteLine($"SteamSpy - Ngày phát hành: {info.ReleaseDate}");
+                            }
+                        }
+                    }
+
+                    try
+                    {
+                        string itadApiKey = "YOUR_API_KEY";
+                        string itadUrl = $"https://api.isthereanydeal.com/v01/game/info/?key={itadApiKey}&plains={appID}";
+                        var itadResponse = await client.GetAsync(itadUrl);
+
+                        if (itadResponse.IsSuccessStatusCode)
+                        {
+                            string itadJson = await itadResponse.Content.ReadAsStringAsync();
+                            dynamic itadData = JsonConvert.DeserializeObject(itadJson);
+
+                            if (itadData != null && itadData.data != null)
+                            {
+                                if (itadData.data.title != null)
+                                {
+                                    info.Name = itadData.data.title.ToString();
+                                    System.Diagnostics.Debug.WriteLine($"ITAD - Tên: {info.Name}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Lỗi khi truy cập ITAD API: {ex.Message}");
+                    }
+
+                    try
+                    {
+                        string xpawUrl = $"https://steamapi.xpaw.me/api/GetAppChanges/{appID}";
+                        var xpawResponse = await client.GetAsync(xpawUrl);
+
+                        if (xpawResponse.IsSuccessStatusCode)
+                        {
+                            string xpawJson = await xpawResponse.Content.ReadAsStringAsync();
+                            dynamic xpawData = JsonConvert.DeserializeObject(xpawJson);
+
+                            if (xpawData != null && xpawData.success == true)
+                            {
+                                if (xpawData.data?.changes != null)
+                                {
+                                    foreach (var change in xpawData.data.changes)
+                                    {
+                                        if (change.timestamp != null)
+                                        {
+                                            long timestamp = (long)change.timestamp;
+                                            DateTime utcTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(timestamp);
+                                            DateTime localTime = utcTime.AddHours(7);
+
+                                            if (!info.LastUpdateDateTime.HasValue || localTime > info.LastUpdateDateTime.Value)
+                                            {
+                                                info.LastUpdateDateTime = localTime;
+                                                info.LastUpdate = localTime.ToString("dd/MM/yyyy HH:mm:ss") + " (GMT+7)";
+                                                info.UpdateDaysCount = (int)(DateTime.Now - localTime).TotalDays;
+                                                info.HasRecentUpdate = info.UpdateDaysCount >= 0 && info.UpdateDaysCount < telegramNotifier.NotificationThreshold;
+                                                System.Diagnostics.Debug.WriteLine($"SteamAPI.xpaw.me - Thời gian cập nhật: {info.LastUpdate}, Số ngày trước: {info.UpdateDaysCount}");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Lỗi khi truy cập SteamAPI.xpaw.me: {ex.Message}");
+                    }
+                }
+
+                return info;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi dùng Alternative API cho AppID {appID}: {ex.Message}");
+                return info;
+            }
+        }
+
         private async Task ScanAllGames()
         {
             if (lbSavedIDs.Items.Count == 0)
@@ -1767,7 +1665,7 @@ namespace SteamGamesChecker
             List<string> failedGames = new List<string>();
             List<string> updatedGames = new List<string>();
 
-            toolStripProgressBar1.Maximum = total;
+            toolStripProgressBar1.Maximum = 100;
             toolStripProgressBar1.Value = 0;
             toolStripProgressBar1.Visible = true;
 
@@ -1807,16 +1705,15 @@ namespace SteamGamesChecker
                         GameInfo gameInfo = null;
                         int selectedMethod = cbMethod.SelectedIndex;
 
-                        // Thực hiện lấy thông tin theo phương thức đã chọn
                         switch (selectedMethod)
                         {
-                            case 0: // SteamCMD API
+                            case 0:
                                 gameInfo = await GetGameInfoFromSteamCMD(appID);
                                 break;
-                            case 1: // Steam API
+                            case 1:
                                 gameInfo = await GetGameInfoFromSteamAPI(appID);
                                 break;
-                            case 2: // SteamDB
+                            case 2:
                                 gameInfo = await GetGameInfoFromSteamDB(appID);
                                 break;
                             default:
@@ -1824,7 +1721,6 @@ namespace SteamGamesChecker
                                 break;
                         }
 
-                        // Nếu phương thức đã chọn không trả về đủ thông tin, thử tất cả các phương thức
                         if (gameInfo == null || string.IsNullOrEmpty(gameInfo.Name) ||
                             gameInfo.Name == "Không xác định" || !gameInfo.LastUpdateDateTime.HasValue)
                         {
@@ -1836,10 +1732,8 @@ namespace SteamGamesChecker
                             successCount++;
                             gameInfo.UpdateLastUpdateDateTime();
 
-                            // Tải icon game nếu chưa có
                             await DownloadGameIcon(appID);
 
-                            // Kiểm tra xem có phải cập nhật mới không
                             GameInfo oldInfo = gameHistoryManager.GetGameInfo(appID);
                             bool isNewUpdate = false;
 
@@ -1858,10 +1752,7 @@ namespace SteamGamesChecker
                             {
                                 this.Invoke(new Action(() =>
                                 {
-                                    // Cập nhật ImageList với icon game
                                     LoadGameIcon(appID);
-
-                                    // Cập nhật ListView
                                     UpdateListViewItem(gameInfo);
                                 }));
                             }
@@ -1892,7 +1783,6 @@ namespace SteamGamesChecker
                                             lvItem.SubItems.Add(gameInfo.UpdateDaysCount.ToString());
                                             lvItem.Tag = appID;
 
-                                            // Thiết lập icon
                                             lvItem.ImageKey = gameIconImageList.Images.ContainsKey(appID) ? appID : "default";
 
                                             if (gameInfo.HasRecentUpdate)
@@ -1939,7 +1829,6 @@ namespace SteamGamesChecker
                             failedCount++;
                             failedGames.Add($"{gameName} (ID: {appID})");
 
-                            // Vẫn tạo icon mặc định cho game thất bại
                             try
                             {
                                 await DownloadGameIcon(appID);
@@ -1953,7 +1842,6 @@ namespace SteamGamesChecker
                         failedGames.Add($"{gameName} (ID: {appID}) - Lỗi: {ex.Message}");
                         System.Diagnostics.Debug.WriteLine($"Lỗi khi quét game {gameName} (ID: {appID}): {ex.Message}");
 
-                        // Vẫn cố gắng tạo icon mặc định cho game thất bại
                         try
                         {
                             await DownloadGameIcon(appID);
@@ -1961,7 +1849,6 @@ namespace SteamGamesChecker
                         catch { }
                     }
 
-                    // Thêm độ trễ ngẫu nhiên để tránh bị chặn từ các API
                     Random random = new Random();
                     await Task.Delay(random.Next(300, 1500));
                 }
@@ -2063,7 +1950,6 @@ namespace SteamGamesChecker
                     GameInfo oldInfo = gameHistoryManager.GetGameInfo(appID);
                     bool isNewUpdate = gameHistoryManager.AddOrUpdateGameInfo(gameInfo);
 
-                    // Tải icon game nếu chưa có
                     await DownloadGameIcon(appID);
                     LoadGameIcon(appID);
 
@@ -2076,7 +1962,6 @@ namespace SteamGamesChecker
                         lvItem.SubItems.Add(gameInfo.UpdateDaysCount.ToString());
                         lvItem.Tag = appID;
 
-                        // Thiết lập icon
                         lvItem.ImageKey = gameIconImageList.Images.ContainsKey(appID) ? appID : "default";
 
                         if (gameInfo.HasRecentUpdate)
@@ -2177,9 +2062,28 @@ namespace SteamGamesChecker
             if (lbSavedIDs.SelectedIndex != -1)
             {
                 string selectedItem = lbSavedIDs.SelectedItem.ToString();
-                lbSavedIDs.Items.RemoveAt(lbSavedIDs.SelectedIndex);
-                SaveGameIDs();
-                MessageBox.Show($"Đã xóa {selectedItem} khỏi danh sách theo dõi!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Match match = Regex.Match(selectedItem, @"\((\d+)\)$");
+                if (match.Success)
+                {
+                    string appID = match.Groups[1].Value;
+                    lbSavedIDs.Items.RemoveAt(lbSavedIDs.SelectedIndex);
+                    SaveGameIDs();
+
+                    // Xóa game khỏi lvGameHistory
+                    foreach (ListViewItem item in lvGameHistory.Items)
+                    {
+                        if (item.Tag.ToString() == appID)
+                        {
+                            lvGameHistory.Items.Remove(item);
+                            break;
+                        }
+                    }
+
+                    gameHistory.Remove(appID);
+                    gameHistoryManager.RemoveGameInfo(appID);
+
+                    MessageBox.Show($"Đã xóa {selectedItem} khỏi danh sách theo dõi!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
             else
             {
